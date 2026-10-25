@@ -1,0 +1,291 @@
+{% set statusColorMap = {
+  'pending': 'bg-warning text-dark',
+  'open': 'bg-primary text-white',
+  'closed': 'bg-success text-white'
+} %}
+
+<div class="ticket" x-data="ticket()">
+  <div class="container component" data-component-id="{{ componentId }}">
+    <section class="py-5-nav">
+      <div class="row">
+        <div class="col-12 col-lg-3 mb-4">
+          {% render_snippet "customer-sidebar.njk" %}
+        </div>
+        <div class="col-12 col-lg-9">
+          <div class="card p-4 mb-4">
+            <h3 class="mb-3 fw-semibold text-break">
+              {{ ticket.subject }}
+            </h3>
+            <div class="d-flex flex-wrap gap-2">
+              <span class="badge bg-secondary">
+                Opened on {{ ticket.created_at | formatDate }}
+              </span>
+
+              {% if ticket.invoice %}
+                <a href="{{ ticket.invoice.url }}" target="_blank" class="badge bg-light text-dark text-decoration-none">
+                  Invoice #{{ ticket.invoice.unique_id }}
+                </a>
+              {% endif %}
+
+              <span
+                class="badge"
+                :class="{
+                  'bg-warning text-dark': ticket.status === 'pending',
+                  'bg-primary text-white': ticket.status === 'open',
+                  'bg-success text-white': ticket.status === 'closed'
+                }"
+              >
+                <template x-if="ticket.status === 'pending'">
+                  <span>Awaiting Your Response</span>
+                </template>
+                <template x-if="ticket.status === 'open'">
+                  <span>Awaiting Support Response</span>
+                </template>
+                <template x-if="ticket.status === 'closed'">
+                  <span>Closed</span>
+                </template>
+              </span>
+            </div>
+          </div>
+
+          <div class="card ticket-messages-container">
+            <div class="ticket-messages-scroll" x-ref="messagesContainer">
+              <div class="p-4">
+                <template x-for="message in ticket.messages" :key="message.id">
+                  <div class="ticket-message mb-3">
+                    <div class="d-flex gap-3" :class="{ 'flex-row-reverse': message.sender_type === 'shop_customer' }">
+                      <div class="ticket-avatar">
+                        <template x-if="message.sender_type === 'user'">
+                          {% if shop.image_url %}
+                            <img src="{{ shop.image_url }}" alt="{{ shop.name }}" class="ticket-avatar-img" />
+                          {% else %}
+                            <span class="ticket-avatar-placeholder bg-accent-500">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="ticket-avatar-icon" viewBox="0 0 24 24">
+                                <path fill="currentColor" d="M5.025 21q-.825 0-1.412-.587T3.025 19v-7.95q-.575-.525-.887-1.35t-.013-1.8l1.05-3.4q.2-.65.713-1.075T5.075 3h13.9q.675 0 1.175.413t.725 1.087l1.05 3.4q.3.975-.012 1.775t-.888 1.375V19q0 .825-.587 1.413T19.025 21zm9.2-11q.675 0 1.025-.462t.275-1.038l-.55-3.5h-1.95v3.7q0 .525.35.913t.85.387m-4.5 0q.575 0 .938-.388t.362-.912V5h-1.95l-.55 3.5q-.1.6.262 1.05t.938.45m-4.45 0q.45 0 .787-.325t.413-.825L7.025 5h-1.95l-1 3.35q-.15.5.162 1.075T5.275 10m13.5 0q.725 0 1.05-.575t.15-1.075L18.925 5h-1.9l.55 3.85q.075.5.413.825t.787.325"/>
+                              </svg>
+                            </span>
+                          {% endif %}
+                        </template>
+                        <template x-if="message.sender_type === 'shop_customer'">
+                          <span class="ticket-avatar-placeholder bg-accent-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="ticket-avatar-icon" viewBox="0 0 24 24">
+                              <path fill="currentColor" d="M12 12q-1.65 0-2.825-1.175T8 8t1.175-2.825T12 4t2.825 1.175T16 8t-1.175 2.825T12 12m-8 6v-.8q0-.85.438-1.562T5.6 14.55q1.55-.775 3.15-1.162T12 13t3.25.388t3.15 1.162q.725.375 1.163 1.088T20 17.2v.8q0 .825-.587 1.413T18 20H6q-.825 0-1.412-.587T4 18"/>
+                            </svg>
+                          </span>
+                        </template>
+                      </div>
+                      
+                      <div class="flex-grow-1" :class="{ 'text-end': message.sender_type === 'shop_customer', 'text-start': message.sender_type !== 'shop_customer' }">
+                        <div class="d-flex align-items-center gap-2 mb-1" :class="{ 'flex-row-reverse': message.sender_type === 'shop_customer' }">
+                          <p class="ticket-sender-name mb-0" :class="{ 'text-accent-500': message.sender_type === 'shop_customer' }">
+                            <template x-if="message.sender_type === 'user'">
+                              <span>{{ shop.name }}</span>
+                            </template>
+                            <template x-if="message.sender_type === 'shop_customer'">
+                              <span>You</span>
+                            </template>
+                          </p>
+                          <span class="ticket-time-ago" x-text="getTimeAgo(message.created_at)"></span>
+                        </div>
+                        <div class="ticket-message-content">
+                          <p class="mb-0" x-html="message.content"></p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+      
+            <div class="ticket-input-area border-top">
+              <div class="p-4">
+                <template x-if="ticket.status !== 'closed'">
+                  <form @submit.prevent="sendMessage()">
+                    <div class="position-relative">
+                      <div class="d-flex gap-3 align-items-end">
+                        <textarea
+                          x-model="formMessage"
+                          placeholder="Reply to ticket..."
+                          maxlength="8192"
+                          required
+                          class="form-control ticket-textarea"
+                          :disabled="'{{ ticket.status }}' === 'closed' || isSubmitting"
+                          @keydown="handleEnterKey($event)"
+                          rows="1"
+                        ></textarea>
+                        <button 
+                          type="submit" 
+                          :disabled="isSubmitting || '{{ ticket.status }}' === 'closed'" 
+                          class="btn btn-primary ticket-send-btn"
+                        >
+                          <span class="d-none d-xl-inline">Send</span>
+                          <template x-if="isSubmitting">
+                            <i class="fa fa-circle-notch fa-spin"></i>
+                          </template>
+                          <template x-if="!isSubmitting">
+                            <i class="fa fa-paper-plane"></i>
+                          </template>
+                        </button>
+                      </div>
+                      
+                      <template x-if="formError">
+                        <p class="text-danger small mt-1 mb-0" x-text="formError"></p>
+                      </template>
+                    </div>
+                  </form>
+                </template>
+                <template x-if="ticket.status === 'closed'">
+                  <p class="text-center text-muted mb-0">
+                    This ticket has been closed.
+                  </p>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="components">
+  {% for componentId in components_order %}
+    {% render_component componentId %}
+  {% endfor %}
+</div>
+
+<script>
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('ticket', () => ({
+      ticket: {{ ticket | json }},
+      formMessage: '',
+      formError: '',
+      isSubmitting: false,
+
+      init() {
+        this.scrollToBottom();
+
+        setInterval(() => {
+          this.fetchTicket();
+        }, 10000);
+      },
+
+      scrollToBottom() {
+        this.$nextTick(() => {
+          if (this.$refs.messagesContainer) {
+            this.$refs.messagesContainer.scrollTop = this.$refs.messagesContainer.scrollHeight;
+          }
+        });
+      },
+
+      getTimeAgo(input) {
+        const date = (input instanceof Date) ? input : new Date(input);
+        const formatter = new Intl.RelativeTimeFormat('en');
+        const ranges = {
+          years: 3600 * 24 * 365,
+          months: 3600 * 24 * 30,
+          weeks: 3600 * 24 * 7,
+          days: 3600 * 24,
+          hours: 3600,
+          minutes: 60,
+          seconds: 1
+        };
+        const secondsElapsed = (date.getTime() - Date.now()) / 1000;
+        for (let key in ranges) {
+          if (ranges[key] < Math.abs(secondsElapsed)) {
+            const delta = secondsElapsed / ranges[key];
+            return formatter.format(Math.round(delta), key);
+          }
+        }
+
+        return 'just now';
+      },
+
+      async fetchTicket() {
+        const token = Cookies.get('shop_customer_token');
+
+        try {
+          const response = await fetch(`{{ ('/v1/customer-dashboard/tickets/' ~ ticket.id) | apiInternalUrl }}`, {
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            }
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to fetch ticket');
+          }
+
+          this.ticket = await response.json();
+          this.scrollToBottom();
+        } catch (error) {
+          console.error('Failed to fetch ticket:', error);
+        }
+      },
+
+      async sendMessage() {
+        if (!this.formMessage.trim()) {
+          this.formError = 'Message is required.';
+          return;
+        }
+
+        if (this.formMessage.length > 8192) {
+          this.formError = 'Message is too long.';
+          return;
+        }
+
+        this.isSubmitting = true;
+        this.formError = '';
+
+        const token = Cookies.get('shop_customer_token');
+
+        try {
+          const response = await fetch(`{{ ('/v1/customer-dashboard/tickets/' ~ ticket.id ~ '/messages') | apiInternalUrl }}`, {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              content: this.formMessage
+            })
+          });
+
+          if (response.status === 429) {
+            throw new Error('You are sending messages too quickly.');
+          }
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to send message');
+          }
+
+          this.formMessage = '';
+          this.formError = '';
+          this.isSubmitting = false;
+
+          await this.fetchTicket();
+        } catch (error) {
+          console.error('Failed to send message:', error);
+          this.formError = 'Failed to send message';
+        } finally {
+          this.isSubmitting = false;
+        }
+      },
+
+      handleEnterKey(event) {
+        if (event.key === 'Enter') {
+          if (event.shiftKey) {
+            return;
+          } else {
+            event.preventDefault();
+            this.sendMessage();
+          }
+        }
+      }
+    }));
+  });
+</script>

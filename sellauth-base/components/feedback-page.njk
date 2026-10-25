@@ -1,0 +1,17 @@
+<div class="container component" data-component-id="{{ componentId }}">
+  <section class="py-5-nav">
+    <div class="section-title">
+      <h1>Customer Reviews</h1>
+    </div>
+    <div class="testimonials row">
+      {% for feedback in feedbacks %}
+      <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+        {% render_snippet "feedback-card.njk", feedback=feedback %}
+      </div>
+      {% endfor %}
+    </div>
+    {% if feedbacks_paginator.last_page > 1 %}
+      {% render_snippet "pagination.njk", paginator=feedbacks_paginator %}
+    {% endif %}
+  </section>
+</div>

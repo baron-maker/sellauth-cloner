@@ -1,0 +1,47 @@
+<div class="modal fade" id="admin-login-modal" tabindex="-1" aria-labelledby="admin-login-modal-label" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="admin-login-modal-label">
+          Admin Access
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form @submit.prevent="appMaintenance.modalLogin()">
+          <div class="mb-1">
+            <label class="mb-0 form-label">
+              Password
+            </label>
+            <small class="d-block form-text">
+              Enter the maintenance password to access admin functions.
+            </small>
+          </div>
+          <div class="mt-2">
+            <input 
+              type="password"
+              x-model="appMaintenance.modalPassword"
+              x-ref="appMaintenance.modalPasswordInput"
+              placeholder="Enter the maintenance password"
+              class="form-control"
+            />
+          </div>
+          <p x-show="appMaintenance.modalError" class="form-text text-danger" x-text="appMaintenance.modalError"></p>
+          <button 
+            type="submit"
+            class="btn btn-primary mt-3 w-100"
+            :disabled="appMaintenance.modalLoading"
+          >
+            <span>Login</span>
+            <template x-if="!appMaintenance.modalLoading">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><!-- Icon from Material Symbols by Google - https://github.com/google/material-design-icons/blob/master/LICENSE --><path fill="currentColor" d="M13 21q-.425 0-.712-.288T12 20t.288-.712T13 19h6V5h-6q-.425 0-.712-.288T12 4t.288-.712T13 3h6q.825 0 1.413.588T21 5v14q0 .825-.587 1.413T19 21zm-1.825-8H4q-.425 0-.712-.288T3 12t.288-.712T4 11h7.175L9.3 9.125q-.275-.275-.275-.675t.275-.7t.7-.313t.725.288L14.3 11.3q.3.3.3.7t-.3.7l-3.575 3.575q-.3.3-.712.288T9.3 16.25q-.275-.3-.262-.712t.287-.688z"/></svg>
+            </template>
+            <template x-if="appMaintenance.modalLoading">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-dasharray="16" stroke-dashoffset="16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c4.97 0 9 4.03 9 9"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.2s" values="16;0"/><animateTransform attributeName="transform" dur="1.5s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"/></path></svg>
+            </template>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

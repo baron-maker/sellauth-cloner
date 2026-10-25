@@ -1,0 +1,76 @@
+{% set statusLabelMap = {
+  'pending': 'Awaiting Your Response',
+  'open': 'Awaiting Support Response',
+  'closed': 'Closed'
+} %}
+
+<div class="container component" data-component-id="{{ componentId }}">
+  <section class="py-5-nav">
+    <div class="row">
+      <div class="col-12 col-lg-3 mb-4">
+        {% render_snippet "customer-sidebar.njk" %}
+      </div>
+      <div class="col-12 col-lg-9">
+        <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
+          <i class="fa fa-info-circle me-2"></i>
+          <div class="flex-grow-1">
+            <small>
+              You can open a new ticket on the <a href="{{ '/customer/invoices' | shopUrl }}" class="text-accent-500">Orders</a> page by clicking on the "Open Ticket" button next to an order.
+            </small>
+          </div>
+        </div>
+        
+        <div class="card p-4">
+          <h3 class="mb-4">Tickets</h3>
+          
+          {% if tickets.length > 0 %}
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Subject</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Opened At</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for ticket in tickets %}
+                  <tr class="small">
+                    <td>
+                      <a href="{{ ('/customer/tickets/' ~ ticket.id) | shopUrl }}" class="text-accent-500">
+                        {{ ticket.subject }}
+                      </a>
+                    </td>
+                    <td>
+                      {% if ticket.status in statusLabelMap %}
+                        {{ statusLabelMap[ticket.status] }}
+                      {% else %}
+                        <span class="text-capitalize">{{ ticket.status | replace('_', ' ') }}</span>
+                      {% endif %}
+                    </td>
+                    <td>{{ ticket.created_at | formatDateTime }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <div class="text-center py-4">
+              <p class="text-muted mb-0">No Tickets Yet</p>
+            </div>
+          {% endif %}
+          
+          {% if tickets_paginator.last_page > 1 %}
+            <div class="mt-4">
+              {% render_snippet "pagination.njk", paginator=tickets_paginator %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="components">
+  {% for componentId in components_order %}
+    {% render_component componentId %}
+  {% endfor %}
+</div>

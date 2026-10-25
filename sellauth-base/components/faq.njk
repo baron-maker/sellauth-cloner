@@ -1,0 +1,31 @@
+<section class="py-20 faq bg-block-{{ properties.background }} component" data-component-id="{{ componentId }}">
+  <div class="container">
+    {% if properties.title %}
+    <div class="section-title">
+      <h2>{{ properties.title | renderString }}</h2>
+    </div>
+    {% endif %}
+    {% if properties.subtitle %}
+    <div class="section-subtitle">
+      <p>{{ properties.subtitle | renderString }}</p>
+    </div>
+    {% endif %}
+    <div class="accordion">
+      {% for item in properties.items %}
+      {% set faqId = componentId ~ '-' ~ loop.index %}
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ faqId }}" aria-expanded="false" aria-controls="collapse-{{ faqId }}">
+            {{ item.question | renderString }}
+          </button>
+        </h2>
+        <div id="collapse-{{ faqId }}" class="accordion-collapse collapse" data-bs-parent="#collapse-{{ faqId }}">
+          <div class="accordion-body">
+            <span class="whitespace-pre-line">{{ item.answer | renderString }}</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>

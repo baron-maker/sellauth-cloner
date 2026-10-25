@@ -1,0 +1,29 @@
+<section class="container py-20 image-gallery component" data-component-id="{{ componentId }}">
+  {% if properties.title %}
+  <div class="section-title">
+    <h2>{{ properties.title | renderString }}</h2>
+  </div>
+  {% endif %}
+  {% if properties.subtitle %}
+  <div class="section-subtitle">
+    <p>{{ properties.subtitle | renderString }}</p>
+  </div>
+  {% endif %}
+  <div class="row list">
+    {% if properties.items_per_row == 1 %}
+      {% set colClass = 'col-12' %}
+    {% elif properties.items_per_row == 2 %}
+      {% set colClass = 'col-12 col-md-6' %}
+    {% elif properties.items_per_row == 3 %}
+      {% set colClass = 'col-12 col-md-4' %}
+    {% elif properties.items_per_row == 4 %}
+      {% set colClass = 'col-6 col-md-3' %}
+    {% endif %}
+
+    {% for image in properties.images %}
+    <div class="{{ colClass }} {{ ('aspect-' + properties.aspect_ratio) if (properties.aspect_ratio and properties.aspect_ratio != 'Default') }}">
+      <img src="{{ image | imageUrl }}" alt="" class="img-fluid" loading="lazy" />
+    </div>
+    {% endfor %}
+  </div>
+</section>

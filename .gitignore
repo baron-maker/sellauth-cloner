@@ -1,0 +1,8 @@
+node_modules/
+output/
+_grabbed/
+*.zip
+preview-server.mjs
+npm-debug.log*
+.env
+.env.*

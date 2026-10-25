@@ -1,0 +1,110 @@
+{% set productImages = product.image_urls or [] %}
+{% set productBadges = product.product_badges.card if product.product_badges and product.product_badges.card else [] %}
+
+<a
+  class="card text-decoration-none"
+  href="{{ 'javascript:void(0);' if product.type == 'group' else ( ('/product/' + product.path) | shopUrl ) }}"
+  data-bs-toggle="{{ 'modal' if product.type == 'group' else '' }}"
+  data-bs-target="{{ '#group-modal-' ~ product.id if product.type == 'group' else '' }}"
+>
+  <div class="card-img-top aspect-product-card-image">
+    {% if productImages|length > 0 %}
+    <img src="{{ productImages[0] }}" class="img-fluid aspect-product-card-image object-product-image" loading="lazy" />
+    {% elif product.image_url %}
+    <img src="{{ product.image_url }}" class="img-fluid aspect-product-card-image object-product-image" loading="lazy" />
+    {% else %}
+    <div
+      class="product-img-placeholder aspect-product-card-image"
+      style="color: {{ global.properties.theme_color }};"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="32"
+        height="32"
+        viewBox="0 0 256 256"
+      >
+        <path
+          fill="currentColor"
+          d="m222.72 67.91l-88-48.18a13.9 13.9 0 0 0-13.44 0l-88 48.18A14 14 0 0 0 26 80.18v95.64a14 14 0 0 0 7.28 12.27l88 48.18a13.92 13.92 0 0 0 13.44 0l88-48.18a14 14 0 0 0 7.28-12.27V80.18a14 14 0 0 0-7.28-12.27ZM127 30.25a2 2 0 0 1 1.92 0L212.51 76l-33.94 18.57l-84.52-46.26ZM122 223l-83-45.43a2 2 0 0 1-1-1.75V86.66l84 46ZM43.49 76l38.07-20.85l84.51 46.26L128 122.24ZM218 175.82a2 2 0 0 1-1 1.75L134 223v-90.36l36-19.71V152a6 6 0 0 0 12 0v-45.63l36-19.71Z"
+        />
+      </svg>
+    </div>
+    {% endif %}
+    <div class="overlay">
+      <button class="btn btn-primary btn-sm" type="button">
+        View Details
+      </button>
+    </div>
+
+    {% if productBadges|length > 0 %}
+      <div class="badges">
+        {% for productBadge in productBadges %}
+          <div style="background-color: {{ productBadge.color }}" data-text="{{ productBadge.label }}" data-color="{{ productBadge.color }}">
+            {% if productBadge.icon %}
+              <i class="{{ productBadge.icon }} fa-fw"></i>
+            {% endif %}
+            {{ productBadge.label }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+  <div class="card-body">
+    <div class="info">
+      <p class="price">
+        {% if product.min_price != product.max_price %}
+          <span x-text="appCurrency.format({{ product.min_price }}, '{{ product.currency }}')">
+            {{ formatPrice(product.min_price, product.currency) }}
+          </span>
+          -
+          <span x-text="appCurrency.format({{ product.max_price }}, '{{ product.currency }}')">
+            {{ formatPrice(product.max_price, product.currency) }}
+          </span>
+        {% elif product.min_price %}
+          <span x-text="appCurrency.format({{ product.min_price }}, '{{ product.currency }}')">
+            {{ formatPrice(product.min_price, product.currency) }}
+          </span>
+        {% else %}
+          -
+        {% endif %}
+
+        {% if product.min_price_slash and product.max_price_slash and product.min_price_slash != product.max_price_slash %}
+          <s class="opacity-50">
+            <span x-text="appCurrency.format({{ product.min_price_slash }}, '{{ product.currency }}')">
+              {{ formatPrice(product.min_price_slash, product.currency) }}
+            </span>
+            -
+            <span x-text="appCurrency.format({{ product.max_price_slash }}, '{{ product.currency }}')">
+              {{ formatPrice(product.max_price_slash, product.currency) }}
+            </span>
+          </s>
+        {% elif product.min_price_slash %}
+          <s class="opacity-50">
+            <span x-text="appCurrency.format({{ product.min_price_slash }}, '{{ product.currency }}')">
+              {{ formatPrice(product.min_price_slash, product.currency) }}
+            </span>
+          </s>
+        {% endif %}
+      </p>
+      {% if product.type == 'group' %}
+        <p class="text-primary">{{ product.products | length }} Products</p>
+      {% else %}
+        <p class="text-primary">
+          {% if product.stock == 0 %}
+            Out of Stock
+          {% elif product.hide_stock_count %}
+            In Stock
+          {% elif product.stock == -1 %}
+            <span class="stock-unlimited">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256"><path d="M248,128a56,56,0,0,1-95.6,39.6l-.33-.35L92.12,99.55a40,40,0,1,0,0,56.9l8.52-9.62a8,8,0,1,1,12,10.61l-8.69,9.81-.33.35a56,56,0,1,1,0-79.2l.33.35,59.95,67.7a40,40,0,1,0,0-56.9l-8.52,9.62a8,8,0,1,1-12-10.61l8.69-9.81.33-.35A56,56,0,0,1,248,128Z"></path></svg>
+              In Stock
+            </span>
+          {% else %}
+            {{ product.stock + ' In Stock' }}
+          {% endif %}
+        </p>
+      {% endif %}
+    </div>
+    <h5 class="card-title">{{ product.name }}</h5>
+  </div>
+</a>

@@ -1,0 +1,45 @@
+{% set data = [] %}
+{% if related_blog_posts %}
+  {% set data = related_blog_posts %}
+{% elif blog_posts %}
+  {% set data = blog_posts %}
+{% elif latest_blog_posts %}
+  {% set data = latest_blog_posts %}
+{% endif %}
+
+{% if templateName == 'blog' %}
+<section class="container component" data-component-id="{{ componentId }}">
+  <div class="py-5-nav">
+{% else %}
+<section class="py-20 text-block component" data-component-id="{{ componentId }}">
+  <div class="container">
+{% endif %}
+
+    {% if properties.title %}
+      <div class="section-title">
+        <h2>{{ properties.title | renderString }}</h2>
+      </div>
+    {% endif %}
+    {% if properties.subtitle %}
+      <div class="section-subtitle">
+        <p>{{ properties.subtitle | renderString }}</p>
+      </div>
+    {% endif %}
+
+    {% if data|length > 0 %}
+      <div class="row products">
+        {% for blogPost in data.slice(0, (properties.amount if properties.amount else data|length)) %}
+          {% render_snippet "blog-post-card.njk", blogPost=blogPost %}
+        {% endfor %}
+      </div>
+      
+      {% if blog_posts_paginator.last_page > 1 %}
+        {% render_snippet "pagination.njk", paginator=blog_posts_paginator %}
+      {% endif %}
+    {% else %}
+      <div class="alert alert-info">
+        No Blog Posts Yet.
+      </div>
+    {% endif %}
+  </div>
+</section>

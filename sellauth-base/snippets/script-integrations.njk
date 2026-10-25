@@ -1,0 +1,68 @@
+{% if shop.crisp_website_id %}
+  <script>
+    window.$crisp=[];
+    window.CRISP_WEBSITE_ID="{{ shop.crisp_website_id }}";
+    (function(){
+      d=document;s=d.createElement("script");
+      s.src="https://client.crisp.chat/l.js";
+      s.async=1;
+      d.getElementsByTagName("head")[0].appendChild(s);
+    })();
+  </script>
+{% endif %}
+
+{% if shop.tawkto_id %}
+  <script>
+    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+    (function(){
+    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+    s1.async=true;
+    s1.src='https://embed.tawk.to/{{ shop.tawkto_id }}';
+    s1.charset='UTF-8';
+    s1.setAttribute('crossorigin','*');
+    s0.parentNode.insertBefore(s1,s0);
+    })();
+  </script>
+{% endif %}
+
+{% if shop.gtag_id %}
+  <script async src="https://www.googletagmanager.com/gtag/js?id={{ shop.gtag_id }}"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', '{{ shop.gtag_id }}');
+  </script>
+{% endif %}
+
+{% if shop.gtm_id %}
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','{{ shop.gtm_id }}');</script>
+{% endif %}
+
+{% if shop.meta_pixel_id %}
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '{{ shop.meta_pixel_id }}');
+    fbq('track', 'PageView');
+  </script>
+{% endif %}
+
+{% if analytics_script_url and analytics_website_id %}
+  <script defer src="{{ analytics_script_url }}" data-website-id="{{ analytics_website_id }}"></script>
+{% endif %}
+
+{% if footer_scripts %}
+  {{ footer_scripts | safe }}
+{% endif %}

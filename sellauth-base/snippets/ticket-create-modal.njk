@@ -1,0 +1,80 @@
+<div class="modal fade" id="ticket-create-modal" tabindex="-1" aria-labelledby="ticket-create-modal-label" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="ticket-create-modal-label">
+          Create a Support Ticket
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form @submit.prevent="appTickets.submitTicket()">
+          <div class="mb-3">
+            <label class="form-label">
+              Invoice
+            </label>
+            <input
+              type="text"
+              x-model="appTickets.invoiceId"
+              disabled
+              class="form-control"
+            />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">
+              Subject
+            </label>
+            <input
+              type="text"
+              x-model="appTickets.subject"
+              x-ref="appTickets.subjectInput"
+              placeholder="Brief description of your issue"
+              maxlength="255"
+              class="form-control"
+              required
+            />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">
+              Message
+            </label>
+            <textarea
+              x-model="appTickets.message"
+              placeholder="Please describe your issue in detail..."
+              maxlength="8000"
+              rows="6"
+              class="form-control"
+              style="resize: vertical;"
+              required
+            ></textarea>
+          </div>
+
+          <p x-show="appTickets.error" class="text-danger small mt-2" x-text="appTickets.error"></p>
+
+          <button
+            type="submit"
+            class="btn btn-primary w-100 mt-3"
+            :disabled="appTickets.loading"
+          >
+            <span>Submit Ticket</span>
+            <template x-if="!appTickets.loading">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="ms-2">
+                <path fill="currentColor" d="M16.15 13H5q-.425 0-.712-.288T4 12t.288-.712T5 11h11.15L13.3 8.15q-.3-.3-.288-.7t.288-.7q.3-.3.713-.312t.712.287L19.3 11.3q.15.15.213.325t.062.375t-.062.375t-.213.325l-4.575 4.575q-.3.3-.712.288t-.713-.313q-.275-.3-.288-.7t.288-.7z"/>
+              </svg>
+            </template>
+            <template x-if="appTickets.loading">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="ms-2">
+                <path fill="none" stroke="currentColor" stroke-dasharray="16" stroke-dashoffset="16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c4.97 0 9 4.03 9 9">
+                  <animate fill="freeze" attributeName="stroke-dashoffset" dur="0.2s" values="16;0"/>
+                  <animateTransform attributeName="transform" dur="1.5s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"/>
+                </path>
+              </svg>
+            </template>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

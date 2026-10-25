@@ -1,0 +1,160 @@
+<div class="container component" data-component-id="{{ componentId }}">
+  <section class="py-5-nav">
+    <div class="row">
+      <div class="col-12 col-lg-3 mb-4">
+        {% render_snippet "customer-sidebar.njk" %}
+      </div>
+      <div class="col-12 col-lg-9">
+        {% if shop_customer.affiliate_code %}
+          <div class="row">
+            <div class="col-12 col-md-6 mb-4">
+              <div class="card h-100 p-4">
+                <h4 class="text-lg text-t-primary/80">
+                  Your Affiliate Link
+                </h4>
+                <p class="small">
+                  Share your affiliate link with friends and earn rewards when they make purchases.
+                </p>
+                <div class="d-flex justify-content-between align-items-center gap-2 mt-3">
+                  <span>{{ shop.url }}/?a={{ shop_customer.affiliate_code }}</span>
+                  <div class="d-flex align-items-center gap-1">
+                    {% if shop.affiliate_code_editable %}
+                      <button
+                        type="button"
+                        class="btn btn-primary-outline text-accent-500"
+                        title="Edit Affiliate Code"
+                        @click="appAffiliate.modalEditCodeOpen('{{ shop_customer.affiliate_code }}')"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><!-- Icon from Material Symbols by Google - https://github.com/google/material-design-icons/blob/master/LICENSE --><path fill="currentColor" d="M5 21q-.825 0-1.412-.587T3 19V5q0-.825.588-1.412T5 3h8.925l-2 2H5v14h14v-6.95l2-2V19q0 .825-.587 1.413T19 21zm4-6v-4.25l9.175-9.175q.3-.3.675-.45t.75-.15q.4 0 .763.15t.662.45L22.425 3q.275.3.425.663T23 4.4t-.137.738t-.438.662L13.25 15zM21.025 4.4l-1.4-1.4zM11 13h1.4l5.8-5.8l-.7-.7l-.725-.7L11 11.575zm6.5-6.5l-.725-.7zl.7.7z"/></svg>
+                      </button>
+                    {% endif %}
+                    <button
+                      type="button"
+                      class="btn btn-primary-outline text-accent-500"
+                      title="Copy Affiliate Link"
+                      x-data="{
+                        copied: false,
+                        copy() {
+                          const affiliateLink = '{{ shop.url }}/?a={{ shop_customer.affiliate_code }}';
+                          navigator.clipboard.writeText(affiliateLink).then(() => {
+                            this.copied = true;
+                            setTimeout(() => {
+                              this.copied = false;
+                            }, 2000);
+                          })
+                        }
+                      }"
+                      @click="copy()"
+                      :disabled="copied"
+                    >
+                      <svg x-show="!copied" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE --><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M7 9.667A2.667 2.667 0 0 1 9.667 7h8.666A2.667 2.667 0 0 1 21 9.667v8.666A2.667 2.667 0 0 1 18.333 21H9.667A2.667 2.667 0 0 1 7 18.333z"/><path d="M4.012 16.737A2 2 0 0 1 3 15V5c0-1.1.9-2 2-2h10c.75 0 1.158.385 1.5 1"/></g></svg>
+                      <svg x-show="copied" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><!-- Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE --><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M7 9.667A2.667 2.667 0 0 1 9.667 7h8.666A2.667 2.667 0 0 1 21 9.667v8.666A2.667 2.667 0 0 1 18.333 21H9.667A2.667 2.667 0 0 1 7 18.333z"/><path d="M4.012 16.737A2 2 0 0 1 3 15V5c0-1.1.9-2 2-2h10c.75 0 1.158.385 1.5 1M11 14l2 2l4-4"/></g></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-md-6 mb-4">
+              <div class="card h-100 p-4">
+                <h4 class="text-lg text-t-primary/80">
+                  Affiliate Rewards
+                </h4>
+                <p class="small">
+                  You earn a percentage of the total invoice amount for each purchase made through your affiliate link.
+                </p>
+                <h5 class="mb-0 mt-3">
+                  {{ shop.affiliate_percentage }}%
+                </h5>
+              </div>
+            </div>
+            <div class="col-12 col-md-6 mb-4">
+              <a href="{{ '/customer/balance' | shopUrl }}" class="card text-decoration-none h-100 p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">
+                    View Your Balance
+                  </h5>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M224,104a8,8,0,0,1-16,0V59.32l-66.33,66.34a8,8,0,0,1-11.32-11.32L196.68,48H152a8,8,0,0,1,0-16h64a8,8,0,0,1,8,8Zm-40,24a8,8,0,0,0-8,8v72H48V80h72a8,8,0,0,0,0-16H48A16,16,0,0,0,32,80V208a16,16,0,0,0,16-16V136A8,8,0,0,0,184,128Z"></path>
+                  </svg>
+                </div>
+              </a>
+            </div>
+            <div class="col-12 col-md-6 mb-4">
+              <a href="{{ '/customer/balance' | shopUrl }}" class="card text-decoration-none h-100 p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">
+                    View Your Balance History
+                  </h5>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M224,104a8,8,0,0,1-16,0V59.32l-66.33,66.34a8,8,0,0,1-11.32-11.32L196.68,48H152a8,8,0,0,1,0-16h64a8,8,0,0,1,8,8Zm-40,24a8,8,0,0,0-8,8v72H48V80h72a8,8,0,0,0,0-16H48A16,16,0,0,0,32,80V208a16,16,0,0,0,16-16V136A8,8,0,0,0,184,128Z"></path>
+                  </svg>
+                </div>
+              </a>
+            </div>
+          </div>
+          <div class="card p-4">
+            <h5>
+              Referred Users
+            </h5>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">E-mail Address</th>
+                  <th scope="col">Amount Earned</th>
+                  <th scope="col">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if referred_customers.length > 0 %}
+                  {% for customer in referred_customers %}
+                    <tr class="small">
+                      <td class="text-capitalize">{{ customer.email }}</td>
+                      <td class="text-capitalize">
+                        <span x-text="appCurrency.format({{ customer.affiliate_referrer_earnings }}, 'USD')">
+                          {{ formatPrice(customer.affiliate_referrer_earnings, 'USD') }}
+                        </span>
+                      </td>
+                      <td>{{ customer.created_at | formatDateTime }}</td>
+                    </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="3" class="text-center">No referred customers yet.</td>
+                  </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+    
+          {% if referred_customers_paginator.last_page > 1 %}
+            {% render_snippet "pagination.njk", paginator=referred_customers_paginator %}
+          {% endif %}
+        {% else %}
+          <div class="row">
+            <div class="col-12 mb-4">
+              <div class="card h-100 p-4">
+                <h4 class="text-lg text-t-primary/80">
+                  Affiliate Program
+                </h4>
+                <p class="small mb-1">
+                  No affiliate link has been assigned to your account.
+                </p>
+                <p class="small mb-0">
+                  Please contact us to enroll in the Affiliate Program.
+                </p>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="components">
+  {% for componentId in components_order %}
+    {% render_component componentId %}
+  {% endfor %}
+</div>
+
+{% render_snippet "affiliate-edit-code-modal.njk" %}

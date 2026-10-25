@@ -1,0 +1,28 @@
+{% set data = [] %}
+{% if feedbacks %}
+  {% set data = feedbacks %}
+{% elif latest_feedbacks %}
+  {% set data = latest_feedbacks %}
+{% endif %}
+
+<section class="py-20 text-block alignment-{{ properties.alignment }} bg-block-{{ properties.background }} component" data-component-id="{{ componentId }}">
+  <div class="container">
+    {% if properties.title %}
+    <div class="section-title">
+      <h2>{{ properties.title | renderString }}</h2>
+    </div>
+    {% endif %}
+    {% if properties.subtitle %}
+    <div class="section-subtitle">
+      <p>{{ properties.subtitle | renderString }}</p>
+    </div>
+    {% endif %}
+    <div class="row">
+      {% for feedback in data.slice(0, properties.amount) %}
+      <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+        {% render_snippet "feedback-card.njk", feedback=feedback %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>

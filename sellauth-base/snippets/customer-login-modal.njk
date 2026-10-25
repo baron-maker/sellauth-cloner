@@ -1,0 +1,113 @@
+<div class="modal fade" id="customer-login-modal" tabindex="-1" aria-labelledby="customer-login-modal-label" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="customer-login-modal-label">
+          Log in to Your Customer Account
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div x-show="appCustomer.modalStep === 1">
+          <form @submit.prevent="appCustomer.modalRequestOtp()">
+            <div class="mb-1">
+              <label class="mb-0 form-label">
+                E-mail Address
+              </label>
+              <small class="d-block form-text">
+                We'll send you a one-time password to this email address.
+              </small>
+            </div>
+            <div class="mt-2">
+              <input 
+                type="email"
+                x-model="appCustomer.modalEmail"
+                x-ref="appCustomer.modalEmailInput"
+                placeholder="name@domain.com"
+                class="form-control"
+              />
+            </div>
+
+            {% if altcha_shop_customer %}
+              <div
+                x-cloak
+                x-show="!appCustomer.altchaPayload"
+                class="transition-opacity mt-2"
+                x-transition:enter="transition ease-out duration-300 transform"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="transition ease-in duration-200 transform"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+              >
+                <altcha-widget
+                  challengejson='{{ altcha_shop_customer | json }}'
+                  auto="onload"
+                  hidefooter="true"
+                  hidelogo="true"
+                  x-ref="appCustomer.altcha"
+                ></altcha-widget>
+              </div>
+            {% endif %}
+
+            <p x-show="appCustomer.modalEmailError" class="form-text text-danger" x-text="appCustomer.modalEmailError"></p>
+            <button 
+              type="submit"
+              class="btn btn-primary mt-3 w-100"
+              :disabled="appCustomer.modalLoading"
+            >
+              <span>Continue</span>
+              <template x-if="!appCustomer.modalLoading">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><!-- Icon from Material Symbols by Google - https://github.com/google/material-design-icons/blob/master/LICENSE --><path fill="currentColor" d="M16.15 13H5q-.425 0-.712-.288T4 12t.288-.712T5 11h11.15L13.3 8.15q-.3-.3-.288-.7t.288-.7q.3-.3.713-.312t.712.287L19.3 11.3q.15.15.213.325t.062.375t-.062.375t-.213.325l-4.575 4.575q-.3.3-.712.288t-.713-.313q-.275-.3-.288-.7t.288-.7z"/></svg>
+              </template>
+              <template x-if="appCustomer.modalLoading">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-dasharray="16" stroke-dashoffset="16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c4.97 0 9 4.03 9 9"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.2s" values="16;0"/><animateTransform attributeName="transform" dur="1.5s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"/></path></svg>
+              </template>
+            </button>
+          </form>
+        </div>
+
+        <div x-show="appCustomer.modalStep === 2">
+          <form @submit.prevent="appCustomer.modalLogin()">
+            <div class="mb-1">
+              <label class="mb-0 form-label">
+                One Time Password
+              </label>
+              <small class="d-block form-text">
+                A 6-digit code has been sent to <span x-text="appCustomer.modalEmail"></span>.
+              </small>
+            </div>
+            <div class="d-flex gap-2 mt-2">
+              {% for index in range(6) %}
+                <input 
+                  type="text"
+                  maxlength="1"
+                  x-model="appCustomer.modalOtpDigits[{{ index }}]"
+                  x-ref="appCustomer.modalOtpInputs[{{ index }}]"
+                  @input="appCustomer.modalOtpHandleInput({{ index }})"
+                  @keydown="appCustomer.modalOtpHandleKeyDown({{ index }}, $event)"
+                  class="form-control text-center"
+                  style="width: 2.5rem; height: 3rem; font-size: 1.25rem;"
+                />
+              {% endfor %}
+            </div>
+            <p x-show="appCustomer.modalOtpError" class="form-text text-danger" x-text="appCustomer.modalOtpError"></p>
+            <button 
+              type="submit"
+              class="btn btn-primary mt-3 w-100"
+              :disabled="appCustomer.modalLoading"
+            >
+              <span>Log In</span>
+              <template x-if="!appCustomer.modalLoading">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><!-- Icon from Material Symbols by Google - https://github.com/google/material-design-icons/blob/master/LICENSE --><path fill="currentColor" d="M16.15 13H5q-.425 0-.712-.288T4 12t.288-.712T5 11h11.15L13.3 8.15q-.3-.3-.288-.7t.288-.7q.3-.3.713-.312t.712.287L19.3 11.3q.15.15.213.325t.062.375t-.062.375t-.213.325l-4.575 4.575q-.3.3-.712.288t-.713-.313q-.275-.3-.288-.7t.288-.7z"/></svg>
+              </template>
+              <template x-if="appCustomer.modalLoading">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-dasharray="16" stroke-dashoffset="16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c4.97 0 9 4.03 9 9"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.2s" values="16;0"/><animateTransform attributeName="transform" dur="1.5s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"/></path></svg>
+              </template>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

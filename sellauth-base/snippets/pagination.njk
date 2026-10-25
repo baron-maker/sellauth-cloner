@@ -1,0 +1,87 @@
+<div class="mt-4">
+    <nav role="navigation" aria-label="Pagination Navigation">
+        <!-- Mobile Pagination -->
+        <div class="d-flex justify-content-between flex-wrap w-100 d-sm-none">
+            {% if paginator.prev_page_url %}
+                <a href="{{ paginator.prev_page_url }}" 
+                   class="btn btn-ouline-primary btn-sm">
+                    « Previous
+                </a>
+            {% else %}
+                <span class="btn btn-ouline-primary btn-sm disabled" aria-disabled="true">
+                    « Previous
+                </span>
+            {% endif %}
+            {% if paginator.next_page_url %}
+                <a href="{{ paginator.next_page_url }}" 
+                   class="btn btn-ouline-primary btn-sm ms-3">
+                    Next »
+                </a>
+            {% else %}
+                <span class="btn btn-ouline-primary btn-sm ms-3 disabled" aria-disabled="true">
+                    Next »
+                </span>
+            {% endif %}
+        </div>
+
+        <!-- Desktop Pagination -->
+        <div class="d-none d-sm-flex flex-wrap align-items-center justify-content-between w-100">
+            <div>
+                <p class="text-muted small mb-0">
+                    Showing 
+                    <span class="fw-semibold">{{ paginator.from }}</span> 
+                    to 
+                    <span class="fw-semibold">{{ paginator.to }}</span> 
+                    of 
+                    <span class="fw-semibold">{{ paginator.total }}</span> 
+                    results
+                </p>
+            </div>
+            <div>
+                <ul class="pagination mb-0">
+                    {% if paginator.prev_page_url %}
+                        <li class="page-item">
+                            <a href="{{ paginator.prev_page_url }}" class="page-link" aria-label="« Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled" aria-disabled="true">
+                            <span class="page-link" aria-label="« Previous">&laquo;</span>
+                        </li>
+                    {% endif %}
+
+                    {% for link in paginator.links %}
+                        {% if link.label != '&laquo; Previous' and link.label != 'Next &raquo;' %}
+                            {% if link.url %}
+                                {% if link.active %}
+                                    <li class="page-item active" aria-current="page">
+                                        <span class="page-link">{{ link.label }}</span>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item">
+                                        <a href="{{ link.url }}" class="page-link" aria-label="Go to page {{ link.label }}">
+                                            {{ link.label }}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if paginator.next_page_url %}
+                        <li class="page-item">
+                            <a href="{{ paginator.next_page_url }}" class="page-link" aria-label="Next »">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled" aria-disabled="true">
+                            <span class="page-link" aria-label="Next »">&raquo;</span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>

@@ -1,0 +1,22 @@
+{
+  "name": "baron-sellauth-cloner",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A Node.js CLI tool that converts rendered web frontends into Sellauth-compatible themes",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "baron-sellauth-cloner": "src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "clone": "node src/index.js"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "nunjucks": "^3.2.4",
+    "puppeteer": "^25.3.0"
+  }
+}

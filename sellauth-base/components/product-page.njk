@@ -1,0 +1,329 @@
+{% set productImages = product.image_urls or [] %}
+{% set productTabs = product.product_tabs or [] %}
+{% set productPageBadges = product.product_badges.page if product.product_badges and product.product_badges.page else [] %}
+{% set productUpsells = productUpsells or [] %}
+{% set liveStats = liveStats or {} %}
+
+<div class="product-wrapper component" data-component-id="{{ componentId }}">
+  <div class="container">
+    <section class="py-5-nav">
+      <div class="container px-4 px-lg-5 my-5">
+        <div class="row gx-4 gx-lg-5">
+          <div class="col-lg-6">
+            {% if productImages|length > 0 %}
+            <div class="carousel slide mb-5" id="productImageCarousel" data-bs-ride="carousel">
+              <div class="carousel-inner">
+                {% for image in productImages %}
+                <div class="carousel-item {{ 'active' if loop.first }}">
+                  <img src="{{ image }}" class="d-block w-100 aspect-product-page-image object-product-image" />
+                </div>
+                {% endfor %}
+              </div>
+              {% if productImages|length > 1 %}
+              <div class="thumbnails">
+                {% for image in productImages %}
+                <button
+                  type="button"
+                  data-bs-target="#productImageCarousel"
+                  data-bs-slide-to="{{ loop.index0 }}"
+                  class="{{ 'active' if loop.first }}"
+                >
+                  <img src="{{ image }}" class="aspect-product-page-image object-product-image" />
+                </button>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+            {% elif product.image_url %}
+            <img src="{{ product.image_url }}" class="card-img-top mb-5 aspect-product-page-image object-product-image" />
+            {% else %}
+            <div
+              class="card-img-top product-img-placeholder text-center mb-5 aspect-product-page-image object-product-image"
+              style="color: {{ global.properties.theme_color }};"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="32"
+                height="32"
+                viewBox="0 0 256 256"
+                class="large"
+              >
+                <path
+                  fill="currentColor"
+                  d="m222.72 67.91l-88-48.18a13.9 13.9 0 0 0-13.44 0l-88 48.18A14 14 0 0 0 26 80.18v95.64a14 14 0 0 0 7.28 12.27l88 48.18a13.92 13.92 0 0 0 13.44 0l88-48.18a14 14 0 0 0 7.28-12.27V80.18a14 14 0 0 0-7.28-12.27ZM127 30.25a2 2 0 0 1 1.92 0L212.51 76l-33.94 18.57l-84.52-46.26ZM122 223l-83-45.43a2 2 0 0 1-1-1.75V86.66l84 46ZM43.49 76l38.07-20.85l84.51 46.26L128 122.24ZM218 175.82a2 2 0 0 1-1 1.75L134 223v-90.36l36-19.71V152a6 6 0 0 0 12 0v-45.63l36-19.71Z"
+                />
+              </svg>
+            </div>
+            {% endif %}
+            <div x-data="{ activeTab: 'description' }">
+              <div class="product-tabs mb-4">
+                {% if productTabs|length > 0 %}
+                <div class="mb-4 d-flex flex-wrap gap-2">
+                  <button type="button" @click="activeTab = 'description'" class="btn" :class="`${activeTab != 'description' ? 'btn-outline-primary' : 'btn-primary'}`">
+                    Description
+                  </button>
+                  {% for productTab in productTabs %}
+                    <button type="button" @click="activeTab = '{{ productTab.slug }}'" class="btn" :class="`${activeTab != '{{ productTab.slug }}' ? 'btn-outline-primary' : 'btn-primary'}`">
+                      {{ productTab.title }}
+                    </button>
+                  {% endfor %}
+                </div>
+                {% endif %}
+                <div class="content">
+                  <template x-if="activeTab == 'description'">
+                    <div class="editor">
+                      {{ product.description | safe }}
+                    </div>
+                  </template>
+                  {% for productTab in productTabs %}
+                    <template x-if="activeTab == '{{ productTab.slug }}'">
+                      <div class="editor">
+                        {{ productTab.content | safe }}
+                      </div>
+                    </template>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div x-data="productForm">
+              <h1 class="display-6 fw-bolder">{{ product.name }}</h1>
+              {% if product.status_color or product.status_text %}
+                <div class="status mb-2" data-color="{{ product.status_color }}" data-label="{{ product.status_text }}">
+                  <div class="indicator" style="background-color: {{ product.status_color }}">
+                    <div class="pulsating" style="background-color: {{ product.status_color }}"></div>
+                  </div>
+                  <span class="label" style="color: {{ product.status_color }}">
+                    {{ product.status_text }}
+                  </span>
+                </div>
+              {% endif %}
+
+              {% if 'sales' in liveStats or 'views' in liveStats %}
+                <div class="live-stats mt-2 mb-4 d-flex flex-column gap-2">
+                  {% if 'views' in liveStats %}
+                    <div class="d-flex align-items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256"><path d="M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.34c18.83-18.83,27.3-37.61,27.65-38.4A8,8,0,0,0,247.31,124.76ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z"></path></svg>
+                      <p class="text-muted">
+                        <strong>{{ liveStats.views }}</strong>
+                        {{ 'person is' if liveStats.views == 1 else 'people are' }} currently viewing this product.
+                      </p>
+                    </div>
+                  {% endif %}
+                  {% if 'sales' in liveStats %}
+                    {% set salesCountHoursLabelMap = {
+                      '1': 'hour',
+                      '6': '6 hours',
+                      '12': '12 hours',
+                      '24': '24 hours',
+                      '168': '7 days',
+                      '720': '30 days'
+                    } %}
+                    <div class="d-flex align-items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256"><path d="M230.14,58.87A8,8,0,0,0,224,56H62.68L56.6,22.57A8,8,0,0,0,48.73,16H24a8,8,0,0,0,0,16h18L67.56,172.29a24,24,0,0,0,5.33,11.27,28,28,0,1,0,44.4,8.44h45.42A27.75,27.75,0,0,0,160,204a28,28,0,1,0,28-28H91.17a8,8,0,0,1-7.87-6.57L80.13,152h116a24,24,0,0,0,23.61-19.71l12.16-66.86A8,8,0,0,0,230.14,58.87ZM104,204a12,12,0,1,1-12-12A12,12,0,0,1,104,204Zm96,0a12,12,0,1,1-12-12A12,12,0,0,1,200,204Zm4-74.57A8,8,0,0,1,196.1,136H77.22L65.59,72H214.41Z"></path></svg>
+                      <p class="text-muted">
+                        <strong>{{ liveStats.sales }}</strong>
+                        {{ 'person has' if liveStats.sales == 1 else 'people have' }} purchased this product{{ '.' if not product.sales_count_hours in salesCountHoursLabelMap else (' in the last ' ~ salesCountHoursLabelMap[product.sales_count_hours] ~ '.') }}
+                      </p>
+                    </div>
+                  {% endif %}
+                </div>
+              {% endif %}
+              {% if product.category_id or productPageBadges|length > 0 %}
+                <div class="badges my-4">
+                  {% if product.category_id %}
+                    <a href="{{ product.category.url }}">
+                      <i class="fa fa-border-all fa-fw"></i>
+                      {{ product.category.name }}
+                    </a>
+                  {% endif %}
+                  {% for productBadge in productPageBadges %}
+                    <div style="background-color: {{ productBadge.color }}" data-text="{{ productBadge.label }}" data-color="{{ productBadge.color }}">
+                      {% if productBadge.icon %}
+                        <i class="{{ productBadge.icon }} fa-fw"></i>
+                      {% endif %}
+                      {{ productBadge.label }}
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+              <div class="mb-4">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="fs-5">
+                    <span x-text="appCurrency.format(totalPrice, '{{ product.currency }}')"></span>
+                  </div>
+                  <div>
+                    {% if product.visibility == 'on_hold' %}
+                    <span class="btn btn-sm stock-indicator btn-outline-primary">
+                      Product On Hold
+                    </span>
+                    {% else %}
+                    <div x-show="activeVariant in product.variants">
+                      <span x-show="product.variants[activeVariant].stock > 0 || product.variants[activeVariant].stock === -1" class="btn btn-sm stock-indicator btn-outline-primary">
+                        <span x-show="product.variants[activeVariant].stock === -1" class="stock-unlimited">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256"><path d="M248,128a56,56,0,0,1-95.6,39.6l-.33-.35L92.12,99.55a40,40,0,1,0,0,56.9l8.52-9.62a8,8,0,1,1,12,10.61l-8.69,9.81-.33.35a56,56,0,1,1,0-79.2l.33.35,59.95,67.7a40,40,0,1,0,0-56.9l-8.52,9.62a8,8,0,1,1-12-10.61l8.69-9.81.33-.35A56,56,0,0,1,248,128Z"></path></svg>
+                          In Stock
+                        </span>
+                        <span x-show="product.variants[activeVariant].stock > 0 && !product.hide_stock_count" x-text="product.variants[activeVariant].stock + ' In Stock'"></span>
+                        <span x-show="product.variants[activeVariant].stock > 0 && product.hide_stock_count">In Stock</span>
+                      </span>
+                      <span x-show="product.variants[activeVariant].stock === 0" x-cloak class="btn btn-sm btn-outline-danger stock-indicator">
+                        Out of Stock
+                      </span>
+                    </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              {% render_snippet "product-form.njk", product=product %}
+            </div>
+          </div>
+        </div>
+        {% if productUpsells|length > 0 %}
+          <div class="row gx-4 gx-lg-5 mt-5">
+            <div class="col">
+              <div class="section-title">
+                <h2>
+                  Commonly Bought Together
+                </h2>
+              </div>
+              <div class="row products">
+                {% set ogProduct = product %}
+                {% for upsell in productUpsells %}
+                  <div class="col-12 col-md-6 col-lg-4 col-xl-3 mb-4">
+                    {% render_snippet "product-card.njk", product=upsell %}
+                  </div>
+                {% endfor %}
+                {% set product = ogProduct %}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+</div>
+
+{% if 'latestOrders' in liveStats and liveStats.latestOrders|length > 0 %}
+  <link href="https://cdn.jsdelivr.net/npm/flag-icons@7.3.2/css/flag-icons.min.css" rel="stylesheet" integrity="sha256-tyPeBlnZW2qWbAF1hQiCt9qo6SOgOSymvJBum+FrrwI=" crossorigin="anonymous">
+  <div
+    x-data="salesNotifications"
+    x-cloak
+    class="notification-container"
+  >
+    <div 
+      x-show="show"
+      class="notification-popup"
+    >
+      <template x-if="order">
+        <div class="notification-content">
+          {% if productImages|length > 0 %}
+            <div class="notification-image-container">
+              <img src="{{ productImages[0] }}" alt="{{ product.name }} image" class="notification-image">
+            </div>
+          {% endif %}
+          <div class="notification-text truncate">
+            <p class="notification-text-primary text-muted">
+              Someone
+              <template x-if="order.country_code">
+                <span>
+                  from <i :class="`flag-icon fi fi-${order.country_code.toLowerCase()}`"></i>
+                </span>
+              </template>
+              purchased
+            </p>
+            <p class="notification-text-secondary">
+              {{ product.name }}
+            </p>
+            <p class="notification-text-tertiary text-muted">
+              <span x-text="getTimeAgo(order.completed_at)"></span>
+            </p>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('salesNotifications', () => ({
+        displayTime: 8000,
+        initTimeMin: 2000,
+        initTimeMax: 4000,
+        nextTimeMin: 8000,
+        nextTimeMax: 12000,
+
+        latestOrders: {{ liveStats.latestOrders | json }},
+        show: false,
+
+        get order() {
+          return this.latestOrders.length > 0 ? this.latestOrders[0] : null;
+        },
+
+        getRandomInterval(min, max) {
+          return Math.floor(Math.random() * (max - min + 1)) + min;
+        },
+
+        getTimeAgo(input) {
+          const date = (input instanceof Date) ? input : new Date(input);
+          const formatter = new Intl.RelativeTimeFormat('en');
+          const ranges = {
+            years: 3600 * 24 * 365,
+            months: 3600 * 24 * 30,
+            weeks: 3600 * 24 * 7,
+            days: 3600 * 24,
+            hours: 3600,
+            minutes: 60,
+            seconds: 1
+          };
+          const secondsElapsed = (date.getTime() - Date.now()) / 1000;
+          for (let key in ranges) {
+            if (ranges[key] < Math.abs(secondsElapsed)) {
+              const delta = secondsElapsed / ranges[key];
+              return formatter.format(Math.round(delta), key);
+            }
+          }
+
+          return 'just now';
+        },
+
+        showNotification() {
+          if (this.latestOrders.length === 0) return;
+
+          this.show = true;
+          setTimeout(() => {
+            this.show = false;
+
+            setTimeout(() => {
+              this.latestOrders.shift();
+
+              if (this.latestOrders.length > 0) {
+                setTimeout(() => this.showNotification(), this.getRandomInterval(this.nextTimeMin, this.nextTimeMax));
+              }
+            }, 500);
+          }, this.displayTime);
+        },
+
+        init() {
+          setTimeout(() => this.showNotification(), this.getRandomInterval(this.initTimeMin, this.initTimeMax));
+        }
+      }));
+    });
+  </script>
+{% endif %}
+
+{% if productImages|length > 1 %}
+<script>
+  // Set active on thumbnail click.
+  document.querySelectorAll('.thumbnails button').forEach((button, index) => {
+    button.addEventListener('click', () => {
+      button.parentNode.querySelectorAll('button').forEach((button) => {
+        button.classList.remove('active');
+      });
+      button.classList.add('active');
+    });
+  });
+</script>
+{% endif %}

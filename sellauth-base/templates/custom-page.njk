@@ -1,0 +1,26 @@
+{#
+  To show different content based on the custom page, you can use the following code snippet.
+  Replace 'about-us' and 'contact' with the actual paths of your custom pages defined in the Visual Editor.
+
+  {% if custom_page.path == 'about-us' %}
+    Your code here
+  {% elif custom_page.path == 'contact' %}
+    Your code here
+  {% else %}
+    Default code here
+  {% endif %}
+#}
+
+<div class="container">
+  <section class="py-5-nav">
+    <div class="section-title">
+      <h1>{{ custom_page.name }}</h1>
+    </div>
+  </section>
+</div>
+
+<div class="components">
+  {% for componentId in components_order %}
+    {% render_component componentId %}
+  {% endfor %}
+</div>

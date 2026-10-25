@@ -1,0 +1,121 @@
+<script type="text/template" id="builder-toolbar">
+  <div class="builder-toolbar container mx-auto" data-component-id="">
+    <div class="actions">
+      <button class="edit" onclick="toolbarEdit(event)" title="Edit Component">
+        <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="#000000" viewBox="0 0 256 256"><path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM51.31,160,136,75.31,152.69,92,68,176.68ZM48,179.31,76.69,208H48Zm48,25.38L79.31,188,164,103.31,180.69,120Zm96-96L147.31,64l24-24L216,84.68Z"></path></svg>
+      </button>
+      <button class="delete" onclick="toolbarDelete(event)" title="Delete Component">
+        <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="#000000" viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path></svg>
+      </button>
+      <button class="move-up" onclick="toolbarMoveUp(event)" title="Move Component Up">
+        <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="#000000" viewBox="0 0 256 256"><path d="M213.66,165.66a8,8,0,0,1-11.32,0L128,91.31,53.66,165.66a8,8,0,0,1-11.32-11.32l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,213.66,165.66Z"></path></svg>
+      </button>
+      <button class="move-down" onclick="toolbarMoveDown(event)" title="Move Component Down">
+        <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="#000000" viewBox="0 0 256 256"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path></svg>
+      </button>
+    </div>
+  </div>
+</script>
+
+<script data-cfasync="false">
+  window.addEventListener('DOMContentLoaded', (event) => {
+    document.documentElement.classList.add('builder');
+
+    // Function to send a Edit component message to the parent window
+    window.toolbarEdit = (event) => {
+      const componentId = event.target.closest('.builder-toolbar').getAttribute('data-component-id');
+      window.parent.postMessage({ type: 'editComponent', data: { componentId } }, '{{ dashboardUrl }}');
+    };
+
+    // Function to send a Delete component message to the parent window
+    window.toolbarDelete = (event) => {
+      const componentId = event.target.closest('.builder-toolbar').getAttribute('data-component-id');
+      window.parent.postMessage({ type: 'deleteComponent', data: { componentId } }, '{{ dashboardUrl }}');
+    };
+
+    // Function to send a Move Up component message to the parent window
+    window.toolbarMoveUp = (event) => {
+      const componentId = event.target.closest('.builder-toolbar').getAttribute('data-component-id');
+      window.parent.postMessage({ type: 'moveComponentUp', data: { componentId } }, '{{ dashboardUrl }}');
+    };
+
+    // Function to send a Move Down component message to the parent window
+    window.toolbarMoveDown = (event) => {
+      const componentId = event.target.closest('.builder-toolbar').getAttribute('data-component-id');
+      window.parent.postMessage({ type: 'moveComponentDown', data: { componentId } }, '{{ dashboardUrl }}');
+    };
+
+    const attachComponentToolbar = () => {
+      const components = document.querySelectorAll('.component');
+      components.forEach((component) => {
+        const componentId = component.getAttribute('data-component-id');
+
+        if (component.querySelector('.builder-toolbar')) {
+          return;
+        }
+
+        // Create a new div element
+        const toolbarContainer = document.createElement('div');
+
+        // Copy the template
+        toolbarContainer.innerHTML = document.getElementById('builder-toolbar').innerHTML.trim();
+
+        // Get the toolbar element
+        const toolbar = toolbarContainer.firstChild;
+        
+        // Set the component ID for button actions.
+        toolbar.setAttribute('data-component-id', componentId);
+
+        // Attach the toolbar to the component
+        component.appendChild(toolbar);
+      });
+    };
+
+    attachComponentToolbar();
+    
+    // Event listener for messages from the parent window
+    window.addEventListener('message', (event) => {
+      // Ensure the message is coming from the expected origin
+      if (event.origin !== '{{ dashboardUrl }}') return;
+
+      const message = event.data;
+
+      if (!message.data || !message.data.url || !message.data.settings) {
+        return;
+      }
+
+      // Reload the content
+      if (message.type == 'reload') {
+        reloadContent(message.data.url, message.data.settings);
+      }
+    });
+
+    const reloadContent = async (url, settings) => {
+      // Fetch the component HTML
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ settings })
+      });
+      const html = await response.text();
+
+      // Parse the HTML
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+
+      // Replace the theme styles #theme-styles
+      document.getElementById('theme-styles').innerHTML = doc.getElementById('theme-styles').innerHTML;
+
+      // Replace the theme font #theme-font
+      document.getElementById('theme-font').href = doc.getElementById('theme-font').href;
+      
+      // Replace the content #app
+      document.getElementById('app').innerHTML = doc.getElementById('app').innerHTML;
+
+      // Reattach the toolbar to the components
+      attachComponentToolbar();
+    }
+  });
+</script>

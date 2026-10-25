@@ -1,0 +1,29 @@
+<div class="container component" data-component-id="{{ componentId }}">
+  <section class="py-5-nav">
+    <div class="section-title">
+      <h1 class="mx-auto text-center">{{ blogPost.title }}</h1>
+    </div>
+    <div class="row">
+      <div class="col-lg-8 mx-auto">
+        <div class="bg-gray rounded p-4">
+          {% if blogPost.summary %}
+            <p class="mb-4 pb-4">{{ blogPost.summary | safe }}</p>
+          {% endif %}
+          {% if blogPost.image_url %}
+            <div class="mb-4">
+              <img src="{{ blogPost.image_url }}" alt="{{ blogPost.title }}" class="img-fluid rounded">
+            </div>
+          {% endif %}
+          <div class="editor">
+            {{ blogPost.content | safe }}
+          </div>
+          <p class="mt-4 pt-4 text-muted">
+            <small>
+              Published at {{ blogPost.created_at | formatDate }}
+            </small>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

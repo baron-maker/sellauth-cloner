@@ -1,0 +1,106 @@
+{% set hasLinks = global.components.footer.links.length > 0 %}
+{% set hasLinks2 = global.components.footer.links_2.length > 0 %}
+{% set hasSocials = global.components.footer.show_socials %}
+{% set hasShopInfo = global.components.footer.show_shop_name or global.components.footer.show_logo %}
+{% set totalRightCols = 0 %}
+{% if hasLinks %}{% set totalRightCols = totalRightCols + 1 %}{% endif %}
+{% if hasLinks2 %}{% set totalRightCols = totalRightCols + 1 %}{% endif %}
+{% if hasSocials %}{% set totalRightCols = totalRightCols + 1 %}{% endif %}
+
+{% if global.components.footer.show_shop_name or global.components.footer.show_logo or global.components.footer.show_socials or global.components.footer.links.length > 0 %}
+  <footer class="footer component" data-component-id="footer">
+    <div class="container">
+      <div class="row py-5">
+        {% if hasShopInfo %}
+          <div class="col-12 {% if totalRightCols > 0 %}col-md-{{ 12 - (totalRightCols * 3) }} col-lg-{{ 12 - (totalRightCols * 2) }}{% endif %}">
+            <div class="logo mb-3 mb-md-0">
+              {% if global.components.footer.show_logo and shop.image_url %}
+                <img src="{{ shop.image_url }}" alt="{{ shop.name }}" class="mb-2" style="max-height: 40px;" />
+              {% endif %}
+              {% if global.components.footer.show_shop_name %}
+                <p class="fs-5 fw-bold mb-0">
+                  {{ shop.name }}
+                </p>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+
+        {% if hasLinks %}
+          <div class="col-6 col-md-3 col-lg-2 {% if not hasShopInfo %}ms-auto{% endif %}">
+            <h5>{% if global.components.footer.links.title %}{{ global.components.footer.links.title }}{% else %}Navigation{% endif %}</h5>
+            <ul class="nav flex-column">
+              {% for link in global.components.footer.links %}
+                <li class="nav-item mb-2">
+                  <a
+                    href="{{ link.link | shopUrl }}"
+                    target="{{ 'blank' if link.new_tab }}"
+                    class="nav-link p-0"
+                  >
+                    {{ link.text }}
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        {% if hasLinks2 %}
+          <div class="col-6 col-md-3 col-lg-2 {% if not hasShopInfo and not hasLinks %}ms-auto{% endif %}">
+            <h5>{{ global.components.footer.links_2_title }}</h5>
+            <ul class="nav flex-column">
+              {% for link in global.components.footer.links_2 %}
+                <li class="nav-item mb-2">
+                  <a
+                    href="{{ link.link | shopUrl }}"
+                    target="{{ 'blank' if link.new_tab }}"
+                    class="nav-link p-0"
+                  >
+                    {{ link.text }}
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        {% if hasSocials %}
+          <div class="col-6 col-md-3 col-lg-2 {% if not hasShopInfo and not hasLinks and not hasLinks2 %}ms-auto{% endif %}">
+            <h5>Socials</h5>
+            <ul class="nav flex-column">
+              {% if shop.discord_url %}
+                <li class="nav-item mb-2">
+                  <a href="{{ shop.discord_url }}" class="nav-link p-0" target="_blank">Discord</a>
+                </li>
+              {% endif %}
+              
+              {% if shop.telegram_url %}
+                <li class="nav-item mb-2">
+                  <a href="{{ shop.telegram_url }}" class="nav-link p-0" target="_blank">Telegram</a>
+                </li>
+              {% endif %}
+              
+              {% if shop.instagram_url %}
+                <li class="nav-item mb-2">
+                  <a href="{{ shop.instagram_url }}" class="nav-link p-0" target="_blank">Instagram</a>
+                </li>
+              {% endif %}
+              
+              {% if shop.tiktok_url %}
+                <li class="nav-item mb-2">
+                  <a href="{{ shop.tiktok_url }}" class="nav-link p-0" target="_blank">TikTok</a>
+                </li>
+              {% endif %}
+
+              {% if shop.youtube_url %}
+                <li class="nav-item mb-2">
+                  <a href="{{ shop.youtube_url }}" class="nav-link p-0" target="_blank">YouTube</a>
+                </li>
+              {% endif %}
+            </ul>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </footer>
+{% endif %}

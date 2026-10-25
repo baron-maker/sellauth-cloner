@@ -1,0 +1,131 @@
+<nav class="navbar navbar-expand-lg component" data-component-id="navbar">
+  <div class="container py-2">
+    {% if global.components.navbar.show_shop_name or global.components.navbar.show_logo %}
+    <a class="navbar-brand fw-bold" href="{{ '/' | shopUrl }}">
+      {% if global.components.navbar.show_logo and shop.image_url %}
+      <img src="{{ shop.image_url }}" alt="{{ shop.name }}" />
+      {% endif %}
+
+      {% if global.components.navbar.show_shop_name %}
+      <span>{{ shop.name }}</span>
+      {% endif %}
+    </a>
+    {% endif %}
+
+    <div class="d-flex gap-2">
+      {% if not global.components.navbar.hide_cart %}
+        <div class="cart d-md-none">
+          <a
+            class="btn"
+            href="{{ '/cart' | shopUrl }}"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M7 22q-.825 0-1.412-.587T5 20t.588-1.412T7 18t1.413.588T9 20t-.587 1.413T7 22m10 0q-.825 0-1.412-.587T15 20t.588-1.412T17 18t1.413.588T19 20t-.587 1.413T17 22M6.15 6l2.4 5h7l2.75-5zM5.2 4h14.75q.575 0 .875.513t.025 1.037l-3.55 6.4q-.275.5-.737.775T15.55 13H8.1L7 15h11q.425 0 .713.288T19 16t-.288.713T18 17H7q-1.125 0-1.7-.987t-.05-1.963L6.6 11.6L3 4H2q-.425 0-.712-.288T1 3t.288-.712T2 2h1.625q.275 0 .525.15t.375.425zm3.35 7h7z"/></svg>
+            <template x-if="appCart.countWithQuantities > 0">
+              <span class="count">
+                <span x-text="appCart.countWithQuantities > 9 ? '9+' : appCart.countWithQuantities"></span>
+              </span>
+            </template>
+          </a>
+        </div>
+      {% endif %}
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+    </div>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        {% for link in global.components.navbar.left_links %}
+        <li class="nav-item">
+          <a
+            class="{{ 'btn btn-outline-primary' if link.shape == 'button' else 'nav-link' }}"
+            href="{{ link.link | shopUrl }}"
+            target="{{ 'blank' if link.new_tab }}"
+            >{{ link.text if link.text else 'New Link' }}</a
+          >
+        </li>
+        {% endfor %}
+      </ul>
+      <ul class="navbar-nav gap-3">
+        {% for link in global.components.navbar.right_links %}
+          <li class="nav-item">
+            <a
+              class="{{ 'btn btn-outline-primary' if link.shape == 'button' else 'nav-link' }}"
+              href="{{ link.link | shopUrl }}"
+              target="{{ 'blank' if link.new_tab }}"
+              >{{ link.text if link.text else 'New Link' }}</a
+            >
+          </li>
+        {% endfor %}
+
+        {% if not global.components.navbar.hide_currency_selector %}
+          {% if currency_rates_usd | length > 1 %}
+            <div class="currency-selector lg">
+              <select>
+                {% for code, rate in currency_rates_usd %}
+                  <option value="{{ code }}">
+                    <span class="d-flex align-items-center justify-content-between">
+                      <span>
+                        <span class="symbol">{{ currency_symbols[code] }}</span>
+                        <span class="code">{{ code.toUpperCase() }}</span>
+                      </span>
+                      {% if code.toUpperCase() == currency %}
+                        <span class="default">Default</span>
+                      {% endif %}
+                    </span>
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+          {% endif %}
+        {% endif %}
+
+        {% if not global.components.navbar.hide_customer_dashboard %}
+          <li class="nav-item user">
+            {% if shop_customer %}
+              <a
+                href="{{ '/customer/dashboard' | shopUrl }}"
+                class="btn btn-outline-primary"
+              >
+                My Account
+              </a>
+            {% else %}
+              <button
+                type="button"
+                data-bs-toggle="modal"
+                data-bs-target="#customer-login-modal"
+                class="btn btn-outline-primary"
+              >
+                Login
+              </button>
+            {% endif %}
+          </li>
+        {% endif %}
+
+        {% if not global.components.navbar.hide_cart %}
+          <li class="nav-item cart d-none d-lg-block">
+            <a
+              class="btn btn-outline-primary"
+              href="{{ '/cart' | shopUrl }}"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M7 22q-.825 0-1.412-.587T5 20t.588-1.412T7 18t1.413.588T9 20t-.587 1.413T7 22m10 0q-.825 0-1.412-.587T15 20t.588-1.412T17 18t1.413.588T19 20t-.587 1.413T17 22M6.15 6l2.4 5h7l2.75-5zM5.2 4h14.75q.575 0 .875.513t.025 1.037l-3.55 6.4q-.275.5-.737.775T15.55 13H8.1L7 15h11q.425 0 .713.288T19 16t-.288.713T18 17H7q-1.125 0-1.7-.987t-.05-1.963L6.6 11.6L3 4H2q-.425 0-.712-.288T1 3t.288-.712T2 2h1.625q.275 0 .525.15t.375.425zm3.35 7h7z"/></svg>
+              <template x-if="appCart.countWithQuantities > 0">
+                <span class="count">
+                  <span x-text="appCart.countWithQuantities > 9 ? '9+' : appCart.countWithQuantities"></span>
+                </span>
+              </template>
+            </a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>

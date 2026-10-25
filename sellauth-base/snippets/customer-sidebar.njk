@@ -1,0 +1,49 @@
+<div class="card p-4">
+  <div class="">
+    <h5>
+      Customer Dashboard
+    </h5>
+    <small class="text-muted">
+      Logged in as {{ shop_customer.email }}
+    </small>
+    <hr>
+  </div>
+  <ul class="nav flex-column gap-2 nav-pills">
+    <li class="nav-item">
+      <a href="{{ '/customer/dashboard' | shopUrl }}" class="nav-link {{ 'active' if templateName == 'customer-dashboard' }}">
+        Dashboard
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="{{ '/customer/invoices' | shopUrl }}" class="nav-link {{ 'active' if templateName == 'customer-invoices' }}">
+        Orders
+      </a>
+    </li>
+    {% if shop.tickets_enabled %}
+      <li class="nav-item">
+        <a href="{{ '/customer/tickets' | shopUrl }}" class="nav-link {{ 'active' if templateName == 'customer-tickets' or templateName == 'customer-ticket' }}">
+          Tickets
+        </a>
+      </li>
+    {% endif %}
+    {% if shop.customer_balance_enabled %}
+      <li class="nav-item">
+        <a href="{{ '/customer/balance' | shopUrl }}" class="nav-link {{ 'active' if templateName == 'customer-balance' }}">
+          Balance
+        </a>
+      </li>
+    {% endif %}
+    {% if shop.affiliate_enabled %}
+      <li>
+        <a href="{{ '/customer/affiliate' | shopUrl }}" class="nav-link {{ 'active' if templateName == 'customer-affiliate' }}">
+          Affiliate
+        </a>
+      </li>
+    {% endif %}
+    <li class="nav-item">
+      <button type="button" @click="appCustomer.logout()" class="nav-link">
+        Logout
+      </button>
+    </li>
+  </ul>
+</div>

@@ -1,0 +1,910 @@
+{% set variants = product.variants or [] %}
+{% set productAddons = productAddons or [] %}
+{% set quantity_deals = quantity_deals or [] %}
+{% set bundle_offers = bundle_offers or [] %}
+
+<form @submit.prevent="buyNow">
+  <div class="row mb-2">
+    {% if variants|length > 1 %}
+      <div class="mb-3 col-12">
+        <label for="method" class="form-label">Variant</label>
+        <div class="d-flex flex-wrap variants">
+          {% for variant in variants %}
+            <button
+              type="button"
+              class="variant btn-primary"
+              :class="`${activeVariant == {{ loop.index0 }} ? 'active' : ''}`"
+              @click="() => activeVariant = {{ loop.index0 }}"
+              {{ 'title="Out of Stock"' if variant.stock == 0 }}
+              {{ 'disabled' if variant.stock == 0 }}
+            >
+              <div class="name-stock">
+                <p class="name">{{ variant.name }}</p>
+                {% if variant.description %}
+                  <p class="description text-muted">{{ variant.description }}</p>
+                {% endif %}
+                <p class="stock text-muted">
+                  {% if variant.stock == 0 %}
+                    <span>Out of Stock</span>
+                  {% elif product.hide_stock_count %}
+                    <span>In Stock</span>
+                  {% elif variant.stock == -1 %}
+                    <span class="stock-unlimited">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256"><path d="M248,128a56,56,0,0,1-95.6,39.6l-.33-.35L92.12,99.55a40,40,0,1,0,0,56.9l8.52-9.62a8,8,0,1,1,12,10.61l-8.69,9.81-.33.35a56,56,0,1,1,0-79.2l.33.35,59.95,67.7a40,40,0,1,0,0-56.9l-8.52,9.62a8,8,0,1,1-12-10.61l8.69-9.81.33-.35A56,56,0,0,1,248,128Z"></path></svg>
+                      In Stock
+                    </span>
+                  {% else %}
+                    <span>{{ variant.stock }} In Stock</span>
+                  {% endif %}
+                </p>
+              </div>
+              <div class="price">
+                <span x-text="appCurrency.format({{ variant.price }}, '{{ product.currency }}')">
+                  {{ formatPrice(variant.price, product.currency) }}
+                </span>
+                {% if variant.price_slash %}
+                  <s class="opacity-50">
+                    <span x-text="appCurrency.format({{ variant.price_slash }}, '{{ product.currency }}')">
+                      {{ formatPrice(variant.price_slash, product.currency) }}
+                    </span>
+                  </s>
+                {% endif %}
+              </div>
+              <template x-if="activeVariant == {{ loop.index0 }}">
+                <div class="active-indicator">
+                  <svg
+                    class="text-primary"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </div>
+              </template>
+            </button>
+          {% endfor %}
+        </div>
+        <small
+          x-show="!(activeVariant in product.variants)"
+          x-cloak
+          class="form-text text-danger"
+        >
+          Please select a variant.
+        </small>
+      </div>
+    {% endif %}
+
+    <div class="mb-3 col-12">
+      <label for="quantity" class="form-label">Quantity</label>
+      <div class="input-group col-4">
+        <button
+          @click="changeQuantity(quantity - 1)"
+          type="button"
+          class="btn btn-outline-primary input-group-btn"
+          :disabled="outOfStock || quantity <= minQuantity"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M19.5 12h-15"
+            />
+          </svg>
+        </button>
+        <input
+          type="number"
+          class="form-control"
+          name="quantity"
+          x-model.number="quantity"
+          :min="minQuantity"
+          :max="maxQuantity"
+          :disabled="outOfStock"
+        />
+        <button
+          @click="changeQuantity(quantity + 1)"
+          type="button"
+          class="btn btn-outline-primary input-group-btn"
+          :disabled="outOfStock || quantity >= maxQuantity"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 4.5v15m7.5-7.5h-15"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <small
+        x-show="!outOfStock && (quantity < minQuantity || quantity > maxQuantity)"
+        x-cloak
+        class="form-text text-danger"
+      >
+        Please enter a valid quantity (from <span x-text="minQuantity"></span> to <span x-text="maxQuantity"></span>).
+      </small>
+
+      <div x-show="nextVolumeDiscount">
+        <div class="form-control text-center mt-2">
+          Buy <span x-text="nextVolumeDiscount?.quantity - quantity"></span> more to get a <span x-text="nextVolumeDiscount?.percentage"></span>% discount.
+        </div>
+      </div>
+    </div>
+
+    {% if productAddons|length > 0 %}
+      <div class="mb-3 col-12">
+        <label class="form-label">Addons</label>
+        <div class="d-flex flex-column gap-2">
+          {% for addon in productAddons %}
+            <div class="addon-item d-flex align-items-center justify-content-between gap-3 p-3 rounded">
+              <div class="d-flex align-items-center gap-2 flex-grow-1">
+                {% if addon.image_urls and addon.image_urls[0] %}
+                  <img 
+                    src="{{ addon.image_urls[0] }}" 
+                    alt="{{ addon.name }}"
+                    class="addon-image rounded"
+                  >
+                {% endif %}
+                <div class="flex-grow-1">
+                  <p class="mb-1 fw-medium">{{ addon.name }}</p>
+                  {% if addon.description %}
+                    <p class="mb-1 small text-muted" style="white-space: pre-line;">{{ addon.description }}</p>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-3">
+                <span class="fw-medium" x-text="appCurrency.format('{{ addon.variants[0].price }}', '{{ addon.currency }}')">
+                  {{ formatPrice(addon.variants[0].price, addon.currency) }}
+                </span>
+                <button
+                  type="button"
+                  x-show="!appCart.isInCart({{ addon.variants[0].id }}, variant.id)"
+                  x-on:click="appCart.add({{ addon.id }}, {{ addon.variants[0].id }}, 1, variant.id)"
+                  class="btn btn-sm btn-addon-add d-flex justify-content-center align-items-center gap-1"
+                  :disabled="outOfStock || product.visibility == 'on_hold' || cartLimitReached || addingToCart"
+                >
+                  <span>Add</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="size-3.5" viewBox="0 0 24 24"><!-- Icon from Material Symbols by Google - https://github.com/google/material-design-icons/blob/master/LICENSE --><path fill="currentColor" d="M11 13H6q-.425 0-.712-.288T5 12t.288-.712T6 11h5V6q0-.425.288-.712T12 5t.713.288T13 6v5h5q.425 0 .713.288T19 12t-.288.713T18 13h-5v5q0 .425-.288.713T12 19t-.712-.288T11 18z"/></svg>
+                </button>
+                {% if addon.is_mandatory %}
+                  <button
+                    type="button"
+                    x-show="appCart.isInCart({{ addon.variants[0].id }}, variant.id)"
+                    class="btn btn-sm btn-addon-add d-flex justify-content-center align-items-center gap-1"
+                    disabled
+                    title="This addon is mandatory"
+                  >
+                    <span>Added</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="size-3.5" viewBox="0 0 24 24"><!-- Icon from Material Symbols by Google - https://github.com/google/material-design-icons/blob/master/LICENSE --><path fill="currentColor" d="m9.55 15.15l8.475-8.475q.3-.3.7-.3t.7.3t.3.713t-.3.712l-9.175 9.2q-.3.3-.7.3t-.7-.3L4.55 13q-.3-.3-.288-.712t.313-.713t.713-.3t.712.3z"/></svg>
+                  </button>
+                {% else %}
+                  <button
+                    type="button"
+                    x-show="appCart.isInCart({{ addon.variants[0].id }}, variant.id)"
+                    x-on:click="appCart.remove({{ addon.variants[0].id }}, variant.id)"
+                    class="btn btn-sm btn-addon-remove d-flex justify-content-center align-items-center gap-1"
+                    :disabled="outOfStock || product.visibility == 'on_hold' || cartLimitReached || addingToCart"
+                  >
+                    <span>Remove</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="size-3.5" viewBox="0 0 24 24"><!-- Icon from Material Symbols by Google - https://github.com/google/material-design-icons/blob/master/LICENSE --><path fill="currentColor" d="m12 13.4l-4.9 4.9q-.275.275-.7.275t-.7-.275t-.275-.7t.275-.7l4.9-4.9l-4.9-4.9q-.275-.275-.275-.7t.275-.7t.7-.275t.7.275l4.9 4.9l4.9-4.9q.275-.275.7-.275t.7.275t.275.7t-.275.7L13.4 12l4.9 4.9q.275.275.275.7t-.275.7t-.7.275t-.7-.275z"/></svg>
+                  </button>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    {% if quantity_deals|length %}
+      <div class="mb-3 col-12">
+        <label class="form-label">Quantity Deals</label>
+        <div class="d-flex flex-column gap-2">
+          {% for deal in quantity_deals %}
+            {% set bundleSize = deal.buy_quantity + deal.discounted_quantity %}
+            <div
+              class="d-flex align-items-center justify-content-between gap-3 p-3 rounded border"
+              {% if deal.variant_id %}
+                x-show="variant.id === {{ deal.variant_id }}"
+                x-cloak
+              {% endif %}
+            >
+              <div class="flex-grow-1">
+                <p class="mb-1 fw-medium">{{ deal.name }}</p>
+                <p class="mb-0 small text-muted">
+                  {% if deal.percentage == 100 %}
+                    Buy {{ deal.buy_quantity }}{% if deal.variant_name %} {{ deal.variant_name }}{% endif %}, get {{ deal.discounted_quantity }} free
+                  {% else %}
+                    Buy {{ deal.buy_quantity }}{% if deal.variant_name %} {{ deal.variant_name }}{% endif %}, get {{ deal.discounted_quantity }} at {{ deal.percentage }}% off
+                  {% endif %}
+                  {% if deal.max_uses_per_cart %}
+                    &nbsp;&middot;&nbsp;Max {{ deal.max_uses_per_cart }}&times; per order
+                  {% endif %}
+                  {% if deal.ends_at %}
+                    &nbsp;&middot;&nbsp;<span class="text-muted opacity-50">Ends {{ deal.ends_at | formatDate }}</span>
+                  {% endif %}
+                </p>
+              </div>
+              <div class="d-flex flex-column align-items-center gap-1 flex-shrink-0">
+                <span class="badge rounded-pill text-bg-primary">
+                  {% if deal.percentage == 100 %}FREE{% else %}-{{ deal.percentage }}%{% endif %}
+                </span>
+                <button
+                  type="button"
+                  x-show="quantity < {{ bundleSize }}"
+                  @click="changeQuantity({{ bundleSize }})"
+                  class="btn btn-link btn-sm p-0 text-primary"
+                >
+                  Buy {{ bundleSize }}
+                </button>
+                <span
+                  x-show="quantity >= {{ bundleSize }}"
+                  x-cloak
+                  class="d-flex align-items-center gap-1 small text-primary fw-medium"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="size-3" viewBox="0 0 24 24"><path fill="currentColor" d="m9.55 15.15l8.475-8.475q.3-.3.7-.3t.7.3t.3.713t-.3.712l-9.175 9.2q-.3.3-.7.3t-.7-.3L4.55 13q-.3-.3-.288-.712t.313-.713t.713-.3t.712.3z"/></svg>
+                  Active
+                </span>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    {% if bundle_offers|length %}
+      <script>
+        window.__bundleOffers = {{ bundle_offers | json }};
+      </script>
+      <div class="mb-3 col-12">
+        <label class="form-label">Bundle Offers</label>
+        <div class="d-flex flex-column gap-3">
+          {% for offer in bundle_offers %}
+            <div class="d-flex flex-column gap-3 p-3 rounded border">
+              <div class="d-flex align-items-center justify-content-between gap-2">
+                <span class="fw-semibold">{{ offer.name }}</span>
+                {% if offer.ends_at %}
+                  <span class="small text-muted flex-shrink-0">Ends {{ offer.ends_at | formatDate }}</span>
+                {% endif %}
+              </div>
+              <p class="mb-0 small text-muted">
+                {% if offer.type == "percentage" %}
+                  Save {{ offer.discount }}% when you add all items
+                {% else %}
+                  Save <span x-text="appCurrency.format({{ offer.discount }}, '{{ product.currency }}')">{{ formatPrice(offer.discount, product.currency) }}</span> when you add all items
+                {% endif %}
+                {% if offer.max_uses_per_cart %}
+                  &nbsp;&middot;&nbsp;Max {{ offer.max_uses_per_cart }}&times; per order
+                {% endif %}
+              </p>
+              <ul class="list-unstyled d-flex flex-column gap-2 mb-0">
+                {% for item in offer.items %}
+                  <li class="d-flex align-items-center gap-3">
+                    {% if item.image_url %}
+                      <img src="{{ item.image_url }}" alt="{{ item.name }}" class="rounded flex-shrink-0" style="width:32px;height:32px;object-fit:cover">
+                    {% else %}
+                      <div class="rounded flex-shrink-0" style="width:32px;height:32px;background:rgba(255,255,255,0.05)"></div>
+                    {% endif %}
+                    <div class="flex-grow-1 min-w-0">
+                      {% if item.path and not item.is_current %}
+                        <a href="/product/{{ item.path }}" class="small fw-medium text-decoration-none d-block text-truncate">
+                          {{ item.name }}{% if item.quantity > 1 %} &times;{{ item.quantity }}{% endif %}
+                        </a>
+                      {% else %}
+                        <span class="small fw-medium d-block text-truncate">
+                          {{ item.name }}{% if item.quantity > 1 %} &times;{{ item.quantity }}{% endif %}
+                        </span>
+                      {% endif %}
+                    </div>
+                    {% if item.is_current %}
+                      <span x-show="appCart.isInCart(variant.id)" class="d-flex align-items-center gap-1 small text-primary fw-medium flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="size-3" viewBox="0 0 24 24"><path fill="currentColor" d="m9.55 15.15l8.475-8.475q.3-.3.7-.3t.7.3t.3.713t-.3.712l-9.175 9.2q-.3.3-.7.3t-.7-.3L4.55 13q-.3-.3-.288-.712t.313-.713t.713-.3t.712.3z"/></svg>
+                        In cart
+                        <button type="button" @click="appCart.remove(variant.id); addedToCart = false" class="btn btn-link btn-sm p-0 text-muted">&times;</button>
+                      </span>
+                      <span x-show="!appCart.isInCart(variant.id)" class="small text-muted flex-shrink-0">This item</span>
+                    {% elif item.type == 'variant' %}
+                      <span x-show="appCart.isInCart({{ item.id }})" x-cloak class="d-flex align-items-center gap-1 small text-primary fw-medium flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="size-3" viewBox="0 0 24 24"><path fill="currentColor" d="m9.55 15.15l8.475-8.475q.3-.3.7-.3t.7.3t.3.713t-.3.712l-9.175 9.2q-.3.3-.7.3t-.7-.3L4.55 13q-.3-.3-.288-.712t.313-.713t.713-.3t.712.3z"/></svg>
+                        In cart
+                        <button type="button" @click="appCart.remove({{ item.id }})" class="btn btn-link btn-sm p-0 text-muted">&times;</button>
+                      </span>
+                      <button
+                        type="button"
+                        x-show="!appCart.isInCart({{ item.id }})"
+                        @click="appCart.add({{ item.product_id }}, {{ item.id }}, {{ item.quantity }})"
+                        class="btn btn-sm btn-outline-primary flex-shrink-0"
+                      >+ Add</button>
+                    {% elif item.variants and item.variants[0] %}
+                      <span x-show="appCart.isInCart({{ item.variants[0].id }})" x-cloak class="d-flex align-items-center gap-1 small text-primary fw-medium flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="size-3" viewBox="0 0 24 24"><path fill="currentColor" d="m9.55 15.15l8.475-8.475q.3-.3.7-.3t.7.3t.3.713t-.3.712l-9.175 9.2q-.3.3-.7.3t-.7-.3L4.55 13q-.3-.3-.288-.712t.313-.713t.713-.3t.712.3z"/></svg>
+                        In cart
+                        <button type="button" @click="appCart.remove({{ item.variants[0].id }})" class="btn btn-link btn-sm p-0 text-muted">&times;</button>
+                      </span>
+                      <button
+                        type="button"
+                        x-show="!appCart.isInCart({{ item.variants[0].id }})"
+                        @click="appCart.add({{ item.id }}, {{ item.variants[0].id }}, {{ item.quantity }})"
+                        class="btn btn-sm btn-outline-primary flex-shrink-0"
+                      >+ Add</button>
+                    {% elif item.path %}
+                      <a href="/product/{{ item.path }}" class="btn btn-sm btn-outline-primary flex-shrink-0">View</a>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+              <div>
+                <button
+                  type="button"
+                  x-show="!isBundleComplete({{ offer.id }})"
+                  @click="addBundleItems({{ offer.id }})"
+                  class="btn btn-outline-primary w-100"
+                >
+                  Add all to cart
+                </button>
+                <div
+                  x-show="isBundleComplete({{ offer.id }})"
+                  x-cloak
+                  class="d-flex align-items-center justify-content-center gap-2 small text-primary py-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24"><path fill="currentColor" d="m9.55 15.15l8.475-8.475q.3-.3.7-.3t.7.3t.3.713t-.3.712l-9.175 9.2q-.3.3-.7.3t-.7-.3L4.55 13q-.3-.3-.288-.712t.313-.713t.713-.3t.712.3z"/></svg>
+                  All bundle items in cart
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    {% if altcha and not properties.hide_buy_now %}
+      <div
+        x-cloak
+        x-show="!altchaPayload"
+        class="transition-opacity"
+        x-transition:enter="transition ease-out duration-300 transform"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200 transform"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+      >
+        <altcha-widget
+          challengejson='{{ altcha | json }}'
+          auto="onload"
+          hidefooter="true"
+          hidelogo="true"
+          x-ref="altcha"
+        ></altcha-widget>
+      </div>
+    {% endif %}
+
+    <div
+      x-cloak
+      x-show="buyNowError"
+      class="transition-opacity"
+      x-transition:enter="transition ease-out duration-300 transform"
+      x-transition:enter-start="opacity-0" 
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="transition ease-in duration-200 transform"
+      x-transition:leave-start="opacity-100" 
+      x-transition:leave-end="opacity-0"
+    >
+      <div
+        class="alert alert-warning"
+        role="alert"
+        x-text="buyNowError"
+      ></div>
+    </div>
+    
+    <div class="d-flex flex flex-column flex-lg-row mt-4 gap-3 buy-buttons">
+      {% if not properties.hide_add_to_cart %}
+      <div class="col">
+        <button
+          type="button"
+          x-on:click="addToCart"
+          class="w-100 btn btn-primary"
+          :disabled="outOfStock || product.visibility == 'on_hold' || cartLimitReached || addingToCart"
+        >
+          <template x-if="!addingToCart && !addedToCart">
+            <span class="d-flex align-items-center justify-content-center gap-2">
+              <span x-text="cartLimitReached ? 'Cart Limit Reached' : 'Add to Cart'"></span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="size-5" fill="currentColor" viewBox="0 0 256 256"><path d="M230.14,58.87A8,8,0,0,0,224,56H62.68L56.6,22.57A8,8,0,0,0,48.73,16H24a8,8,0,0,0,0,16h18L67.56,172.29a24,24,0,0,0,5.33,11.27,28,28,0,1,0,44.4,8.44h45.42A27.75,27.75,0,0,0,160,204a28,28,0,1,0,28-28H91.17a8,8,0,0,1-7.87-6.57L80.13,152h116a24,24,0,0,0,23.61-19.71l12.16-66.86A8,8,0,0,0,230.14,58.87ZM104,204a12,12,0,1,1-12-12A12,12,0,0,1,104,204Zm96,0a12,12,0,1,1-12-12A12,12,0,0,1,200,204Zm4-74.57A8,8,0,0,1,196.1,136H77.22L65.59,72H214.41Z"></path></svg>
+            </span>
+          </template>
+          <template x-if="addingToCart">
+            <span class="d-flex align-items-center justify-content-center gap-2">
+              <span>Adding...&nbsp;&nbsp;</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="size-5 animate-spin" fill="currentColor" viewBox="0 0 256 256"><path d="M232,128a104,104,0,0,1-208,0c0-41,23.81-78.36,60.66-95.27a8,8,0,0,1,6.68,14.54C60.15,61.59,40,93.27,40,128a88,88,0,0,0,176,0c0-34.73-20.15-66.41-51.34-80.73a8,8,0,0,1,6.68-14.54C208.19,49.64,232,87,232,128Z"></path></svg>
+            </span>
+          </template>
+          <template x-if="addedToCart">
+            <span class="d-flex align-items-center justify-content-center gap-2">
+              <span>Go to Cart</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="size-5" fill="currentColor" viewBox="0 0 256 256"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"></path></svg>
+            </span>
+          </template>
+        </button>
+      </div>
+      {% endif %}
+      {% if not properties.hide_buy_now %}
+        <div class="col">
+          <button
+            type="submit"
+            class="w-100 btn btn-outline-primary"
+            :disabled="outOfStock || product.visibility == 'on_hold' || buyingNow || buyNowDisabled"
+          >
+            <span>Buy Now</span>
+            <template x-if="!buyingNow">
+              <svg xmlns="http://www.w3.org/2000/svg" class="size-5" fill="currentColor" viewBox="0 0 256 256"><path d="M237.66,122.34l-96-96A8,8,0,0,0,128,32V72H104a8,8,0,0,0-8,8v96a8,8,0,0,0,8,8h24v40a8,8,0,0,0,13.66,5.66l96-96A8,8,0,0,0,237.66,122.34ZM144,204.69V176a8,8,0,0,0-8-8H112V88h24a8,8,0,0,0,8-8V51.31L220.69,128ZM48,80v96a8,8,0,0,1-16,0V80a8,8,0,0,1,16,0Zm32,0v96a8,8,0,0,1-16,0V80a8,8,0,0,1,16,0Z"></path></svg>
+            </template>
+            <template x-if="buyingNow">
+              <svg xmlns="http://www.w3.org/2000/svg" class="size-5 animate-spin" fill="currentColor" viewBox="0 0 256 256"><path d="M232,128a104,104,0,0,1-208,0c0-41,23.81-78.36,60.66-95.27a8,8,0,0,1,6.68,14.54C60.15,61.59,40,93.27,40,128a88,88,0,0,0,176,0c0-34.73-20.15-66.41-51.34-80.73a8,8,0,0,1,6.68-14.54C208.19,49.64,232,87,232,128Z"></path></svg>
+            </template>
+          </button>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</form>
+
+<script>
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('productForm', () => ({
+      product: {{ product | json }},
+      productAddons: {{ productAddons | json }},
+      quantityDeals: {{ quantity_deals | json }},
+      activeVariant: 0,
+      quantity: {{ product.quantity_min or 1 }},
+      isEmbed: {{ 'true' if is_embed else 'false' }},
+      addingToCart: false,
+      addedToCart: false,
+      buyingNow: false,
+      buyNowError: null,
+      buyNowDisabled: false,
+      altchaPayload: null,
+
+      get variant() {
+        return this.product.variants[this.activeVariant];
+      },
+
+      init: function () {
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Prefill variant from URL parameter if present.
+        if (urlParams.has('variant')) {
+          const variantIndex = this.product.variants.findIndex(variant => variant.name === urlParams.get('variant'));
+          if (variantIndex !== -1) {
+            this.activeVariant = variantIndex;
+          }
+        } else {
+          // Choose the first variant that has stock.
+          for (let i = 0; i < this.product.variants.length; i++) {
+            if (this.product.variants[i].stock !== 0) {
+              this.activeVariant = i;
+              break;
+            }
+          }
+        }
+
+        if (this.variant.quantity_min) {
+          this.quantity = this.variant.quantity_min;
+        }
+
+        if (urlParams.has('quantity')) {
+          const urlQuantity = parseInt(urlParams.get('quantity'));
+          if (!isNaN(urlQuantity) && urlQuantity >= this.minQuantity && urlQuantity <= this.maxQuantity) {
+            this.quantity = urlQuantity;
+          }
+        }
+
+        this.$watch('activeVariant', (newVal, oldVal) => {
+          const oldVariant = this.product.variants[oldVal];
+          if (oldVariant) {
+            for (const addon of this.productAddons) {
+              if (!addon.is_mandatory) {
+                this.appCart.remove(addon.variants[0].id, oldVariant.id);
+              }
+            }
+          }
+
+          this.quantity = this.product.quantity_min || 1;
+
+          if (this.variant.quantity_min) {
+            this.quantity = this.variant.quantity_min;
+          }
+
+          this.addedToCart = false;
+
+          for (const addon of this.productAddons) {
+            if (addon.is_mandatory) {
+              if (!this.appCart.isInCart(addon.variants[0].id, this.variant.id)) {
+                this.appCart.add(addon.id, addon.variants[0].id, 1, this.variant.id);
+              }
+            }
+          }
+        });
+
+        this.$watch('quantity', () => {
+          this.addedToCart = false;
+        });
+
+        {% if altcha and not properties.hide_buy_now %}
+          this.addAltchaEventListener();
+        {% endif %}
+
+        window.addEventListener('pageshow', (event) => {
+          if (event.persisted) {
+            this.buyingNow = false;
+          }
+        });
+      },
+
+      get nextVolumeDiscount() {
+        if (this.variant.volume_discounts) {
+          const volumeDiscounts = [...this.variant.volume_discounts].sort((a, b) => a.quantity - b.quantity);
+
+          for (const volumeDiscount of volumeDiscounts) {
+            if (this.quantity < parseInt(volumeDiscount.quantity)) {
+              return volumeDiscount;
+            }
+          }
+        }
+
+        return null;
+      },
+
+      getAppliedVolumeDiscount: function (quantity = null) {
+        if (quantity === null) {
+          quantity = this.quantity;
+        }
+
+        if (this.variant.volume_discounts) {
+          const volumeDiscounts = [...this.variant.volume_discounts].sort((a, b) => b.quantity - a.quantity);
+
+          for (const volumeDiscount of volumeDiscounts) {
+            if (quantity >= parseInt(volumeDiscount.quantity)) {
+              return volumeDiscount;
+            }
+          }
+        }
+
+        return null;
+      },
+
+      get unitPrice() {
+        const quantity = 1;
+
+        let price = this.variant.price * quantity;
+
+        // Apply volume discounts
+        const appliedVolumeDiscount = this.getAppliedVolumeDiscount(quantity);
+        if (appliedVolumeDiscount) {
+          price = price - (this.variant.price * parseInt(appliedVolumeDiscount.percentage) / 100);
+        }
+
+        // Format the price to have 2 decimal places
+        const formattedPrice = price.toFixed(2);
+
+        return formattedPrice;
+      },
+
+      get totalPrice() {
+        let price = this.variant.price * this.quantity;
+        let priceBeforeDiscounts = price;
+
+        // Apply volume discounts
+        const appliedVolumeDiscount = this.getAppliedVolumeDiscount();
+        if (appliedVolumeDiscount) {
+          price -= (priceBeforeDiscounts * parseInt(appliedVolumeDiscount.percentage) / 100);
+        }
+
+        // Apply quantity deal discounts
+        for (const deal of this.quantityDeals) {
+          if (deal.variant_id !== null && deal.variant_id !== this.variant.id) continue;
+          const bundleSize = deal.buy_quantity + deal.discounted_quantity;
+          let applications = Math.floor(this.quantity / bundleSize);
+          if (deal.max_uses_per_cart !== null) {
+            applications = Math.min(applications, deal.max_uses_per_cart);
+          }
+          if (applications > 0) {
+            price -= applications * deal.discounted_quantity * this.variant.price * (deal.percentage / 100);
+          }
+        }
+
+        // Append prices of addons
+        if (this.appCart.items.length > 0) {
+          for (const item of this.appCart.items) {
+            if (item.parentVariantId === this.variant.id) {
+              const addonVariant = this.productAddons.find(addon => addon.id === item.productId && addon.variants.some(variant => variant.id === item.variantId));
+              if (addonVariant) {
+                const addonPrice = addonVariant.variants.find(variant => variant.id === item.variantId).price;
+                price += addonPrice * item.quantity;
+              }
+            }
+          }
+        }
+
+        // If price is negative, set it to 0
+        if (price < 0) {
+          price = 0;
+        }
+
+        // Format the price to have 2 decimal places
+        const formattedPrice = price.toFixed(2);
+
+        return formattedPrice;
+      },
+
+      get outOfStock() {
+        if (this.variant) {
+          if (this.variant.stock === 0) {
+            return true;
+          }
+
+          if (this.variant.quantity_min > 0 && this.variant.stock !== -1 && !this.product.hide_stock_count && this.variant.stock < this.variant.quantity_min) {
+            return true;
+          }
+        }
+
+        return false;
+      },
+
+      get minQuantity() {
+        const min = this.variant.quantity_min || 1;
+
+        if (this.variant.stock === 0) {
+          return 0;
+        }
+
+        return min;
+      },
+
+      get maxQuantity() {
+        const max = this.variant.quantity_max || 999999;
+
+        if (this.variant.stock === 0) {
+          return 0;
+        }
+
+        if (this.product.hide_stock_count) {
+          return max;
+        }
+
+        if (this.variant.stock === -1) {
+          return max;
+        }
+
+        return Math.min(max, this.variant.stock);
+      },
+
+      changeQuantity: function (quantity) {
+        const min = this.minQuantity;
+        const max = this.maxQuantity;
+        const newQuantity = Math.min(Math.max(min, quantity), max);
+
+        this.quantity = newQuantity;
+      },
+
+      isBundleComplete: function (offerId) {
+        const offer = window.__bundleOffers?.find(o => o.id === offerId);
+        if (!offer) return false;
+        return offer.items.every(item => {
+          const required = item.quantity || 1;
+          if (item.is_current) {
+            const entry = this.appCart.items.find(i => i.variantId === this.variant.id && !i.parentVariantId);
+            return entry && entry.quantity >= required;
+          }
+          if (item.type === 'variant') {
+            const entry = this.appCart.items.find(i => i.variantId === item.id && !i.parentVariantId);
+            return entry && entry.quantity >= required;
+          }
+          if (item.variants?.[0]) {
+            const entry = this.appCart.items.find(i => i.variantId === item.variants[0].id && !i.parentVariantId);
+            return entry && entry.quantity >= required;
+          }
+          return this.appCart.items.some(i => i.productId === item.id && !i.parentVariantId);
+        });
+      },
+
+      addBundleItems: function (offerId) {
+        const offer = window.__bundleOffers?.find(o => o.id === offerId);
+        if (!offer) return;
+        for (const item of offer.items) {
+          if (item.is_current) {
+            if (!this.appCart.isInCart(this.variant.id)) {
+              const qty = item.quantity || this.quantity;
+              this.quantity = qty;
+              this.appCart.add(this.product.id, this.variant.id, qty);
+              this.addedToCart = true;
+            }
+            continue;
+          }
+          if (item.type === 'variant' && !this.appCart.isInCart(item.id)) {
+            this.appCart.add(item.product_id, item.id, item.quantity);
+          } else if (item.type === 'product' && item.variants?.[0]) {
+            const variantId = item.variants[0].id;
+            if (!this.appCart.isInCart(variantId)) {
+              this.appCart.add(item.id, variantId, item.quantity);
+            }
+          }
+        }
+      },
+
+      get cartLimitReached() {
+        const nonAddonItemsCount = this.appCart.items
+          .filter(item => !item.parentVariantId)
+          .length;
+
+        return nonAddonItemsCount >= {{ shop.max_cart_limit }};
+      },
+
+      addToCart: function () {
+        if (this.addedToCart) {
+          window.location.href = '{{ '/cart' | shopUrl }}';
+          return;
+        }
+
+        if (this.quantity < this.minQuantity || this.quantity > this.maxQuantity) {
+          this.quantity = Math.min(Math.max(this.minQuantity, this.quantity), this.maxQuantity);
+        }
+
+        this.addingToCart = true;
+
+        const productId = this.product.id;
+        const variantId = this.variant.id;
+        const quantity = this.quantity;
+
+        this.appCart.add(productId, variantId, quantity);
+
+        setTimeout(() => {
+          this.addedToCart = true;
+          this.addingToCart = false;
+        }, 500);
+      },
+
+      addAltchaEventListener: function () {
+        this.$refs.altcha.addEventListener('statechange', (event) => {
+          if (event.detail.state === 'verifying') {
+            this.buyNowDisabled = true;
+          } else if (event.detail.state === 'verified') {
+            this.buyNowDisabled = false;
+            this.altchaPayload = event.detail.payload;
+          }
+        });
+      },
+
+      generateRecaptchaToken: async function () {
+        return new Promise((resolve) => {
+          grecaptcha.ready(
+            () =>
+              void (async () => {
+                const token = await grecaptcha.execute(
+                  '{{ shop.recaptcha_key }}',
+                  { action: 'buynow_s{{ shop.id }}' },
+                );
+
+                resolve(token);
+              })(),
+          );
+        });
+      },
+
+      buyNow: async function () {
+        if (this.buyingNow) {
+          return;
+        }
+
+        if (this.quantity < this.minQuantity || this.quantity > this.maxQuantity) {
+          this.buyNowError = `Please enter a valid quantity (from ${this.minQuantity} to ${this.maxQuantity}).`;
+          return;
+        }
+
+        const buyNowCart = [{
+          productId: this.product.id,
+          variantId: this.variant.id,
+          quantity: this.quantity,
+        }];
+
+        if (this.appCart.items.length > 0) {
+          for (const item of this.appCart.items) {
+            if (item.parentVariantId === this.variant.id) {
+              buyNowCart.push({
+                productId: item.productId,
+                variantId: item.variantId,
+                parentVariantId: item.parentVariantId,
+                quantity: item.quantity,
+              });
+            }
+          }
+        }
+
+        const formData = {
+          cart: buyNowCart,
+          currency: this.appCurrency.currency,
+          shopId: '{{ shop.id }}',
+        };
+
+        if (window.shopCustomer?.email) {
+          formData.email = window.shopCustomer.email;
+        }
+
+        {% if altcha %}
+          if (this.altchaPayload) {
+            formData.altcha = this.altchaPayload;
+          }
+        {% elif shop.recaptcha_key %}
+          try {
+            formData.recaptchaToken = await this.generateRecaptchaToken();
+          } catch (error) {
+            this.buyNowError = 'reCAPTCHA cannot be loaded. Please refresh the page and turn off any ad blockers.';
+            this.buyingNow = false;
+            return;
+          }
+        {% endif %}
+
+        try {
+          this.buyingNow = true;
+
+          const response = await fetch('{{ '/v1/checkout' | apiInternalUrl }}', {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+          });
+
+          const responseData = await response.json();
+
+          if (responseData.url) {
+            this.checkoutUrl = responseData.url;
+
+            // Open in new tab if we're in an embed.
+            if (this.isEmbed) {
+              window.open(this.checkoutUrl, '_blank');
+            } else {
+              window.location.href = this.checkoutUrl;
+            }
+          } else {
+            this.buyingNow = false;
+            this.buyNowError = responseData?.message || 'Error in the AJAX request.';
+
+            if (responseData?.error == 'captcha_verification_failed') {
+              setTimeout(() => window.location.reload(), 1000);
+            }
+          }
+        } catch (error) {
+          console.error(error);
+          this.buyingNow = false;
+          this.buyNowError = 'Unexpected error. Please refresh the page and try again.';
+        }
+      }
+    }));
+  });
+</script>
+
+<script>
+  window.addEventListener('load', () => {
+    if (document.querySelector('select[name="variant"]')) {
+     new Choices('select[name="variant"]', { searchPlaceholderValue: 'Search for a variant...', shouldSort: false });
+    }
+  });
+</script>

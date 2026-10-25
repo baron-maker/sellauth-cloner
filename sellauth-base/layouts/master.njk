@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    {% render_snippet "meta-tags.njk" %}
+
+    <link href="{{ 'bootstrap@5.3.8.min.css' | staticAsset }}" rel="stylesheet" />
+    <link href="{{ 'pro.css' | assetUrl }}" rel="stylesheet"/>
+    <link href="{{ 'custom.css' | assetUrl }}" rel="stylesheet"/>
+
+    <style id="theme-styles">
+      :root {
+        --cl-accent: {{ global.properties.theme_color }};
+        --cl-accent-rgb: {{ global.properties.theme_color | hex_to_rgb }};
+        --cl-background-primary: {{ global.properties.primary_background_color }};
+        --cl-background-primary-rgb: {{ global.properties.primary_background_color | hex_to_rgb }};
+        --cl-background-secondary: {{ global.properties.secondary_background_color }};
+        --cl-background-secondary-rgb: {{ global.properties.secondary_background_color | hex_to_rgb }};
+        --cl-border: {{ global.properties.primary_border_color }};
+        --cl-border-rgb: {{ global.properties.primary_border_color | hex_to_rgb }};
+        --bs-font-sans-serif: '{{ (global.properties.font if global.properties.font else 'Poppins') }}', sans-serif;
+        --cl-snow: {{ (global.properties.snow_color if global.properties.snow_color else '#ffffff') | hex_to_rgb }};
+
+        --product-card-image-aspect-ratio: {{ (global.properties.product_card_image_aspect_ratio if global.properties.product_card_image_aspect_ratio else '16/9') }};
+        --product-page-image-aspect-ratio: {{ (global.properties.product_page_image_aspect_ratio if global.properties.product_page_image_aspect_ratio else '16/9') }};
+        --group-card-image-aspect-ratio: {{ (global.properties.group_card_image_aspect_ratio if global.properties.group_card_image_aspect_ratio else '16/9') }};
+        --blog-card-image-aspect-ratio: {{ (global.properties.blog_card_image_aspect_ratio if global.properties.blog_card_image_aspect_ratio else '16/9') }};
+        --product-image-fit: {{ (global.properties.product_image_fit if global.properties.product_image_fit else 'cover') }};
+        --group-image-fit: {{ (global.properties.group_image_fit if global.properties.group_image_fit else 'cover') }};
+      }
+    </style>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family={{ (global.properties.font if global.properties.font else 'Poppins') | replace(" ", "+") }}:wght@300;400;500;600;700&display=swap" rel="stylesheet" id="theme-font">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet" />
+    <link href="{{ 'choices@10.2.0.min.css' | staticAsset }}" rel="stylesheet" />
+  </head>
+  <body>
+    {% if shop.background_image_url %}
+      <div class="bg-image" style="background-image: url({{ shop.background_image_url }});"></div>
+    {% endif %}
+    
+    <div class="flex-wrapper" id="app" x-data="app">
+      <div>
+        {% if templateName != 'maintenance' %}
+          <header class="sticky-top">
+            {% render_component "announcement" %}
+            {% render_component "navbar" %}
+          </header>
+        {% endif %}
+
+        {{ templateContent | safe }}
+      </div>
+
+      {% if templateName != 'maintenance' %}
+        {% render_component "footer" %}
+        {% render_snippet "customer-login-modal.njk" %}
+      {% endif %}
+    </div>
+
+    <script>
+      window.shopId = {{ shop.id | json }};
+      window.apiBaseUrl = {{ '' | apiInternalUrl | json }};
+      window.currencyRatesUsd = {{ currency_rates_usd | json }};
+      window.currencySymbols = {{ currency_symbols | json }};
+      window.defaultCurrency = {{ currency | json }};
+      window.shopCustomer = {{ shop_customer | json }};
+    </script>
+
+    {% if isBuilder %}
+      {% render_snippet "script-builder.njk" %}
+    {% endif %}
+
+    {% if altcha or altcha_shop_customer %}
+      <script src="{{ 'altcha@1.5.1.min.js' | staticAsset }}" type="module"></script>
+    {% elif shop.recaptcha_key %}
+      <script src="https://www.google.com/recaptcha/api.js?render={{ shop.recaptcha_key }}"></script>
+    {% endif %}
+
+    <script src="{{ 'js.cookie@3.0.8.min.js' | staticAsset }}"></script>
+    <script src="{{ 'choices@10.2.0.min.js' | staticAsset }}"></script>
+    <script src="{{ 'jquery@3.7.1.min.js' | staticAsset }}"></script>
+    <script src="{{ 'bootstrap.bundle@5.3.8.min.js' | staticAsset }}"></script>
+    <script
+      src="{{ 'script.js' | assetUrl }}"
+      crossorigin="anonymous"
+    ></script>
+    <script src="{{ 'alpinejs@3.15.12.min.js' | staticAsset }}"></script>
+
+    {% if global.properties.snow %}
+      <div id="snow"></div>
+      <script>snow({ count: 200 });</script>
+    {% endif %}
+
+    {% render_snippet "script-integrations.njk" %}
+  </body>
+</html>

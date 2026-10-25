@@ -1,0 +1,11 @@
+<a href="{{ ('/product/' + product.path) | shopUrl }}" class="status-card">
+  <h3>{{ product.name }}</h3>
+  <div class="status" data-color="{{ product.status_color }}" data-label="{{ product.status_text }}">
+    <div class="indicator" style="background-color: {{ product.status_color }}">
+      <div class="pulsating" style="background-color: {{ product.status_color }}"></div>
+    </div>
+    <span class="label" style="color: {{ product.status_color }}">
+      {{ product.status_text }}
+    </span>
+  </div>
+</a>

@@ -1,0 +1,242 @@
+{% set topUpAmounts = [5, 10, 25, 50, 100] %}
+
+<div class="container component" data-component-id="{{ componentId }}">
+  <section class="py-5-nav">
+    <div class="row">
+      <div class="col-12 col-lg-3 mb-4">
+        {% render_snippet "customer-sidebar.njk" %}
+      </div>
+      <div class="col-12 col-lg-9">
+        <div class="row">
+          <div class="col-12 col-md-6 mb-4">
+            <div class="card h-100 p-4">
+              <h4 class="text-lg text-t-primary/80">
+                Balance
+              </h4>
+              <p class="small">
+                Customer Balance can be used to pay for future orders.
+              </p>
+              <h5 class="mb-0">
+                <span x-text="appCurrency.format({{ shop_customer.balance }}, 'USD')">
+                  {{ formatPrice(shop_customer.balance, 'USD') }}
+                </span>
+              </h5>
+            </div>
+          </div>
+          <div class="col-12 col-md-6 mb-4">
+            <div class="card p-4">
+              <h4 class="text-lg text-t-primary/80">
+                Top Up
+              </h4>
+              <div class="mt-1">
+                {% if balance_product_id and balance_product_variant_id %}
+                  <form x-data="topUpBalance" @submit.prevent="buy">
+                    <p class="small">
+                      Click an amount to top up your balance.
+                    </p>
+                    {% if altcha %}
+                      <div
+                        x-cloak
+                        x-show="!altchaPayload"
+                        class="mb-2 transition-opacity"
+                        x-transition:enter="transition ease-out duration-300 transform"
+                        x-transition:enter-start="opacity-0"
+                        x-transition:enter-end="opacity-100"
+                        x-transition:leave="transition ease-in duration-200 transform"
+                        x-transition:leave-start="opacity-100"
+                        x-transition:leave-end="opacity-0"
+                      >
+                        <altcha-widget
+                          challengejson='{{ altcha | json }}'
+                          auto="onload"
+                          hidefooter="true"
+                          hidelogo="true"
+                          x-ref="altcha"
+                        ></altcha-widget>
+                      </div>
+                    {% endif %}
+                    <div class="flex flex-wrap items-center gap-2">
+                      {% for amount in topUpAmounts %}
+                        <button
+                          type="submit"
+                          @click="amount = {{ amount }}"
+                          :disabled="buyingAmount === {{ amount }}"
+                          class="btn btn-outline-primary position-relative"
+                        >
+                          <span :class="buyingAmount === {{ amount }} ? 'opacity-0' : 'opacity-100'">
+                            {{ formatPrice(amount, 'USD') }}
+                          </span>
+                          <template x-if="buyingAmount === {{ amount }}">
+                            <span class="position-absolute top-50 start-50 d-flex align-items-center justify-content-center text-accent-500">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="animate-spin" fill="currentColor" viewBox="0 0 256 256"><path d="M232,128a104,104,0,0,1-208,0c0-41,23.81-78.36,60.66-95.27a8,8,0,0,1,6.68,14.54C60.15,61.59,40,93.27,40,128a88,88,0,0,0,176,0c0-34.73-20.15-66.41-51.34-80.73a8,8,0,0,1,6.68-14.54C208.19,49.64,232,87,232,128Z"></path></svg>
+                            </span>
+                          </template>
+                        </button>
+                      {% endfor %}
+                    </div>
+                  </form>
+                {% else %}
+                  <p class="text-muted mt-2">
+                    Not Available
+                  </p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card p-4">
+          <h5>
+            Transaction History
+          </h5>
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Type</th>
+                <th scope="col">Description</th>
+                <th scope="col">Amount</th>
+                <th scope="col">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if balance_transactions.length > 0 %}
+                {% for transaction in balance_transactions %}
+                  <tr class="small">
+                    <td>{{ transaction.id }}</td>
+                    <td class="text-capitalize">{{ transaction.type }}</td>
+                    <td>
+                      {% if transaction.description %}
+                        {{ transaction.description }}
+                      {% elif transaction.invoice %}
+                        <a href="/checkout/{{ transaction.invoice.unique_id }}" target="_blank" class="hover:underline">
+                          Invoice {{ transaction.invoice.unique_id }}
+                        </a>
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+                    <td>{{ formatPrice(transaction.amount, 'USD') }}</td>
+                    <td>{{ transaction.created_at | formatDateTime }}</td>
+                  </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="5" class="text-center">No Balance Transactions Yet</td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+    
+        {% if balance_transactions_paginator.last_page > 1 %}
+          {% render_snippet "pagination.njk", paginator=balance_transactions_paginator %}
+        {% endif %}
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="components">
+  {% for componentId in components_order %}
+    {% render_component componentId %}
+  {% endfor %}
+</div>
+
+<script>
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('topUpBalance', () => ({
+      amount: null,
+      buyingAmount: null,
+      altchaPayload: null,
+
+      init: function () {
+        {% if altcha %}
+          this.addAltchaEventListener();
+        {% endif %}
+      },
+
+      addAltchaEventListener: function () {        
+        this.$refs.altcha.addEventListener('statechange', (event) => {
+          if (event.detail.state === 'verifying') {
+            this.buyNowDisabled = true;
+          } else if (event.detail.state === 'verified') {
+            this.buyNowDisabled = false;
+            this.altchaPayload = event.detail.payload;
+          }
+        });
+      },
+
+      generateRecaptchaToken: async function () {
+        return new Promise((resolve) => {
+          grecaptcha.ready(
+            () =>
+              void (async () => {
+                const token = await grecaptcha.execute(
+                  '{{ shop.recaptcha_key }}',
+                  { action: 'buynow_s{{ shop.id }}' },
+                );
+
+                resolve(token);
+              })(),
+          );
+        });
+      },
+      
+      buy: async function () {
+        if (this.amount === null) {
+          return;
+        }
+
+        const formData = {
+          cart: [{
+            productId: {{ balance_product_id }},
+            variantId: {{ balance_product_variant_id }},
+            quantity: this.amount,
+          }],
+          currency: this.appCurrency.currency,
+          shopId: '{{ shop.id }}',
+        };
+
+        if (window.shopCustomer?.email) {
+          formData.email = window.shopCustomer.email;
+        }
+
+        {% if altcha %}
+          if (this.altchaPayload) {
+            formData.altcha = this.altchaPayload;
+          }
+        {% elif shop.recaptcha_key %}
+          try {
+            formData.recaptchaToken = await this.generateRecaptchaToken();
+          } catch (error) {
+            console.error(error);
+          }
+        {% endif %}
+
+        try {
+          this.buyingAmount = this.amount;
+
+          const response = await fetch('{{ '/v1/checkout' | apiInternalUrl }}', {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+          });
+
+          const responseData = await response.json();
+
+          if (responseData.url) {
+            window.location.href = responseData.url;
+          }
+        } catch (error) {
+          console.error(error);
+        } finally {
+          this.buyingAmount = null;
+          this.amount = null;
+        }
+      }
+    }));
+  });
+</script>

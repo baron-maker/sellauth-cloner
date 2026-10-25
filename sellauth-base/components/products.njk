@@ -1,0 +1,59 @@
+{% set sortedItems = sortedItems or [] %}
+
+<section class="container py-20 component" id="{{ componentId }}" data-component-id="{{ componentId }}">
+  {% if properties.title %}
+  <div class="section-title">
+    <h2>{{ properties.title | renderString }}</h2>
+  </div>
+  {% endif %}
+  {% if properties.subtitle %}
+  <div class="section-subtitle">
+    <p>{{ properties.subtitle | renderString }}</p>
+  </div>
+  {% endif %}
+  <div>
+    <div class="row products">
+      {% if properties.ids|length == 0 %}
+        {% for item in sortedItems %}
+          {% if item.type == 'group' or not item.group_id %}
+            <div class="col-12 col-md-6 col-lg-4 col-xl-3 mb-4">
+              {% render_snippet "product-card.njk", product=item %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        {% for item in helpers.components.products.getItemsByIds(sortedItems, properties.ids) %}
+          <div class="col-12 col-md-6 col-lg-4 col-xl-3 mb-4">
+            {% render_snippet "product-card.njk", product=item %}
+          </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% for group in sortedItems %}
+  {% if group.type == 'group' %}
+    <div class="modal fade" id="group-modal-{{ group.id }}" tabindex="-1" aria-labelledby="group-modal-{{ group.id }}-label" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="group-modal-{{ group.id }}-label">
+              {{ group.name }} Products
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="products row">
+              {% for product in group.products %}
+                <div class="col-12 col-md-6 col-lg-4 col-xl-3 mb-4">
+                  {% render_snippet "product-card.njk", product=product %}
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endfor %}

@@ -1,0 +1,174 @@
+<div class="container component" data-component-id="{{ componentId }}">
+  <section class="py-5-nav">
+    <div class="row">
+      <div class="col-12 col-lg-3 mb-4">
+        {% render_snippet "customer-sidebar.njk" %}
+      </div>
+      <div class="col-12 col-lg-9">
+        <div class="row">
+          <div class="col-12 col-md-6 col-lg-4 mb-4">
+            <div class="card p-4">
+              <h4>
+                Completed Orders
+              </h4>
+              <p class="mb-0">
+                {{ shop_customer.total_completed }}
+              </p>
+            </div>
+          </div>
+          <div class="col-12 col-md-6 col-lg-4 mb-4">
+            <div class="card p-4">
+              <h4>
+                Total Spent
+              </h4>
+              <p class="mb-0">
+                <span x-text="appCurrency.format({{ shop_customer.total_spent_usd }}, 'USD')">
+                  {{ formatPrice(shop_customer.total_spent_usd, 'USD') }}
+                </span>
+              </p>
+            </div>
+          </div>
+          <div class="col-12 col-md-6 col-lg-4 mb-4">
+            <div class="card p-4">
+              <h4>
+                Customer Since
+              </h4>
+              <p class="mb-0">
+                {{ shop_customer.created_at | formatDate }}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-12 col-lg-8 mb-4">
+            <div class="card p-4">
+              <h5 class="mb-0">
+                Latest Order
+              </h5 >
+              {% if latest_invoice %}
+                <div class="mt-2">
+                  <h4>
+                    {% if latest_invoice.items %}
+                      {% if latest_invoice.items[0].custom_name %}
+                        {{ latest_invoice.items[0].custom_name }}
+                      {% else %}
+                        {{ latest_invoice.items[0].product.name }}
+                        {% if latest_invoice.items[0].variant and latest_invoice.items[0].product.name != latest_invoice.items[0].variant.name %}
+                          ({{ latest_invoice.items[0].variant.name }})
+                        {% endif %}
+                      {% endif %}
+
+                      {% if latest_invoice.items.length > 1 %}
+                        & {{ latest_invoice.items.length - 1 }} more
+                      {% endif %}
+                    {% else %}
+                      Deleted Product
+                    {% endif %}
+                  </h4>
+                  <small class="mb-0 text-muted">
+                    <a href="{{ latest_invoice.url }}" target="_blank" class="text-muted text-decoration-none">
+                      Invoice <span class="text-primary">#{{ latest_invoice.unique_id }}</span>
+                    </a>
+                    - {{ latest_invoice.created_at | formatDate }}
+                  </small>
+                </div>
+              {% else %}
+                <p class="mb-0">
+                  None
+                </p>
+              {% endif %}
+            </div>
+          </div>
+          {% if shop.customer_balance_enabled %}
+            <div class="col-12 col-lg-4 mb-4">
+              <div class="card p-4">
+                <h4>
+                  Balance
+                </h4>
+                <div>
+                  <h4>
+                    <span x-text="appCurrency.format({{ shop_customer.balance }}, 'USD')">
+                      {{ formatPrice(shop_customer.balance, 'USD') }}
+                    </span>
+                  </h4>
+                  <small class="mb-0 text-muted">
+                    <a href="{{ '/customer/balance' | shopUrl }}" class="text-muted text-decoration-none">
+                      <span class="text-primary">Top Up</span>
+                    </a>
+                  </small>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+        <div class="row">
+          <div class="col-12 d-flex justify-content-end">
+            <button type="button" data-bs-toggle="modal" data-bs-target="#customer-delete-modal" class="btn btn-outline-danger">
+              Delete Account
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div
+  x-cloak
+  class="fixed inset-0 z-50 overflow-y-auto"
+  aria-labelledby="delete-modal-title"
+  role="dialog"
+  aria-modal="true"
+>
+  <div class="modal fade" id="customer-delete-modal" tabindex="-1" aria-labelledby="customer-delete-modal-label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="customer-delete-modal-label">
+            Delete Customer Account
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-4">
+            This action cannot be undone and will permanently remove all your data, order history and balance.
+          </p>
+          <div class="row">
+            <div class="col-12 col-md-6">
+              <button
+                type="button"
+                data-bs-dismiss="modal"
+                class="w-100 btn btn-outline-primary"
+              >
+                <span>Cancel</span>
+                <i class="fa fa-times"></i>
+              </button>
+            </div>
+            <div class="col-12 col-md-6">
+              <button
+                type="button"
+                @click="appCustomer.deleteAccount()"
+                class="w-100 btn btn-danger"
+                :disabled="appCustomer.deleteModalLoading"
+              >
+                <span>Delete Account</span>
+                <template x-if="!appCustomer.deleteModalLoading">
+                  <i class="fa fa-trash"></i>
+                </template>
+                <template x-if="appCustomer.deleteModalLoading">
+                  <i class="fa fa-circle-notch animate-spin"></i>
+                </template>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="components">
+  {% for componentId in components_order %}
+    {% render_component componentId %}
+  {% endfor %}
+</div>
